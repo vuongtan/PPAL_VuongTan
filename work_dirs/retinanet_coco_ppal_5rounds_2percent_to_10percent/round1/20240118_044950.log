@@ -1,0 +1,928 @@
+2024-01-18 04:49:51,733 - mmdet - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.10.12 (main, Nov 20 2023, 15:14:05) [GCC 11.4.0]
+CUDA available: True
+GPU 0: Tesla T4
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 12.2, V12.2.140
+GCC: x86_64-linux-gnu-gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+PyTorch: 1.11.0+cu113
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.5.2 (Git Hash a9302535553c73243c632ad3c4c80beec3d19a1e)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.3
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.2
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.3, CUDNN_VERSION=8.2.0, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.11.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=OFF, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+TorchVision: 0.12.0+cu113
+OpenCV: 4.8.0
+MMCV: 1.5.0
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 11.3
+MMDetection: 2.20.0+f3aac93
+------------------------------------------------------------
+
+2024-01-18 04:49:51,944 - mmdet - INFO - Distributed training: True
+2024-01-18 04:49:52,241 - mmdet - INFO - Config:
+model = dict(
+    type='RetinaNet',
+    backbone=dict(
+        type='ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=False),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='data/pretrain_models/resnet50-19c8e357.pth')),
+    neck=dict(
+        type='FPN',
+        in_channels=[256, 512, 1024, 2048],
+        out_channels=256,
+        start_level=1,
+        add_extra_convs='on_input',
+        num_outs=5),
+    bbox_head=dict(
+        type='RetinaQualityEMAHead',
+        num_classes=10,
+        in_channels=256,
+        stacked_convs=4,
+        feat_channels=256,
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            octave_base_scale=4,
+            scales_per_octave=3,
+            ratios=[0.5, 1.0, 2.0],
+            strides=[8, 16, 32, 64, 128]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[0.0, 0.0, 0.0, 0.0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
+        loss_cls=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+        base_momentum=0.99),
+    train_cfg=dict(
+        assigner=dict(
+            type='MaxIoUAssigner',
+            pos_iou_thr=0.5,
+            neg_iou_thr=0.4,
+            min_pos_iou=0,
+            ignore_iof_thr=-1),
+        allowed_border=-1,
+        pos_weight=-1,
+        debug=False),
+    test_cfg=dict(
+        nms_pre=5000,
+        min_bbox_size=0,
+        score_thr=0.05,
+        nms=dict(type='nms', iou_threshold=0.5),
+        max_per_img=100))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001,
+    step=[20])
+runner = dict(type='EpochBasedRunner', max_epochs=30)
+checkpoint_config = dict(interval=30, max_keep_ckpts=1, by_epoch=True)
+log_config = dict(
+    interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
+custom_hooks = [dict(type='NumClassCheckHook')]
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+mmdet_base = '../../_base_'
+dataset_type = 'CocoDataset'
+data_root = 'data/coco/'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.5),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='Pad', size_divisor=32),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='MultiScaleFlipAug',
+        img_scale=(1333, 800),
+        flip=False,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ])
+]
+data = dict(
+    samples_per_gpu=6,
+    workers_per_gpu=2,
+    train=dict(
+        type='CocoDataset',
+        ann_file=
+        'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1/annotations/labeled.json',
+        img_prefix='data/coco/train2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True),
+            dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+            dict(type='RandomFlip', flip_ratio=0.5),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='DefaultFormatBundle'),
+            dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+        ]),
+    val=dict(
+        type='CocoDataset',
+        ann_file='data/coco/annotations/instances_val2017.json',
+        img_prefix='data/coco/val2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]),
+    test=dict(
+        type='CocoDataset',
+        ann_file='data/coco/annotations/instances_val2017.json',
+        img_prefix='data/coco/val2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]))
+labeled_data = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1/annotations/labeled.json'
+unlabeled_data = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1/annotations/unlabeled.json'
+evaluation = dict(interval=999999, metric='bbox')
+work_dir = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1'
+auto_resume = False
+gpu_ids = range(0, 1)
+
+2024-01-18 04:49:52,242 - mmdet - INFO - Set random seed to 801007425, deterministic: False
+2024-01-18 04:49:52,667 - mmdet - INFO - initialize ResNet with init_cfg {'type': 'Pretrained', 'checkpoint': 'data/pretrain_models/resnet50-19c8e357.pth'}
+2024-01-18 04:49:54,545 - mmdet - INFO - initialize FPN with init_cfg {'type': 'Xavier', 'layer': 'Conv2d', 'distribution': 'uniform'}
+2024-01-18 04:49:54,602 - mmdet - INFO - initialize RetinaQualityEMAHead with init_cfg {'type': 'Normal', 'layer': 'Conv2d', 'std': 0.01, 'override': {'type': 'Normal', 'name': 'retina_cls', 'std': 0.01, 'bias_prob': 0.01}}
+Name of parameter - Initialization information
+
+backbone.conv1.weight - torch.Size([64, 3, 7, 7]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv1.weight - torch.Size([64, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.0.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv1.weight - torch.Size([64, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv1.weight - torch.Size([64, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv1.weight - torch.Size([128, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.0.weight - torch.Size([512, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv1.weight - torch.Size([256, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.0.weight - torch.Size([1024, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.1.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.1.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv1.weight - torch.Size([512, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.0.weight - torch.Size([2048, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.1.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.1.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv1.weight - torch.Size([512, 2048, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv1.weight - torch.Size([512, 2048, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+neck.lateral_convs.0.conv.weight - torch.Size([256, 512, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.lateral_convs.1.conv.weight - torch.Size([256, 1024, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.lateral_convs.2.conv.weight - torch.Size([256, 2048, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.3.conv.weight - torch.Size([256, 2048, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.4.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.4.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.3.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.3.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.retina_cls.weight - torch.Size([90, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=-4.59511985013459 
+
+bbox_head.retina_cls.bias - torch.Size([90]): 
+NormalInit: mean=0, std=0.01, bias=-4.59511985013459 
+
+bbox_head.retina_reg.weight - torch.Size([36, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.retina_reg.bias - torch.Size([36]): 
+NormalInit: mean=0, std=0.01, bias=0 
+2024-01-18 04:50:00,474 - mmdet - INFO - Start running, host: root@a91b3ceedbf8, work_dir: /content/drive/MyDrive/PPALVuongTan/PPAL/work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1
+2024-01-18 04:50:00,474 - mmdet - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) NumClassCheckHook                  
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) NumClassCheckHook                  
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2024-01-18 04:50:00,475 - mmdet - INFO - workflow: [('train', 1)], max: 30 epochs
+2024-01-18 04:50:00,475 - mmdet - INFO - Checkpoints will be saved to /content/drive/MyDrive/PPALVuongTan/PPAL/work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round1 by HardDiskBackend.
+2024-01-18 04:51:51,214 - mmdet - INFO - Iter [50/2790]	lr: 9.890e-04, eta: 1:41:07, time: 2.215, data_time: 0.271, memory: 8961, loss_cls: 1.1411, loss_bbox: 2.2811, loss: 3.4222, grad_norm: 4.8358
+2024-01-18 04:53:47,810 - mmdet - INFO - Iter [100/2790]	lr: 1.988e-03, eta: 2:12:32, time: 3.698, data_time: 1.603, memory: 9034, loss_cls: 0.9191, loss_bbox: 1.2889, loss: 2.2080, grad_norm: 12.4725
+2024-01-18 04:55:33,949 - mmdet - INFO - Iter [150/2790]	lr: 2.987e-03, eta: 1:57:51, time: 2.123, data_time: 0.022, memory: 9034, loss_cls: 1.0703, loss_bbox: 1.2563, loss: 2.3267, grad_norm: 8.7049
+2024-01-18 04:57:32,037 - mmdet - INFO - Iter [200/2790]	lr: 3.986e-03, eta: 1:58:14, time: 2.922, data_time: 0.799, memory: 9046, loss_cls: 1.0870, loss_bbox: 1.0657, loss: 2.1527, grad_norm: 5.3932
+2024-01-18 04:59:17,597 - mmdet - INFO - Iter [250/2790]	lr: 4.985e-03, eta: 1:50:38, time: 2.111, data_time: 0.022, memory: 9046, loss_cls: 0.9926, loss_bbox: 1.1987, loss: 2.1913, grad_norm: 5.0067
+2024-01-18 05:01:15,378 - mmdet - INFO - Iter [300/2790]	lr: 5.984e-03, eta: 1:48:50, time: 2.668, data_time: 0.562, memory: 9046, loss_cls: 1.0148, loss_bbox: 1.1389, loss: 2.1537, grad_norm: 1.0604
+2024-01-18 05:02:59,970 - mmdet - INFO - Iter [350/2790]	lr: 6.983e-03, eta: 1:43:34, time: 2.092, data_time: 0.022, memory: 9046, loss_cls: 0.9038, loss_bbox: 1.1460, loss: 2.0498, grad_norm: 2.8918
+2024-01-18 05:04:57,743 - mmdet - INFO - Iter [400/2790]	lr: 7.982e-03, eta: 1:41:21, time: 2.528, data_time: 0.414, memory: 9046, loss_cls: 0.8711, loss_bbox: 1.1615, loss: 2.0326, grad_norm: 2.9702
+2024-01-18 05:06:42,850 - mmdet - INFO - Iter [450/2790]	lr: 8.981e-03, eta: 1:37:19, time: 2.102, data_time: 0.022, memory: 9046, loss_cls: 0.8514, loss_bbox: 1.1462, loss: 1.9975, grad_norm: 2.5227
+2024-01-18 05:08:39,808 - mmdet - INFO - Iter [500/2790]	lr: 9.980e-03, eta: 1:34:59, time: 2.430, data_time: 0.337, memory: 9046, loss_cls: 0.7298, loss_bbox: 1.0328, loss: 1.7625, grad_norm: 3.3083
+2024-01-18 05:10:24,514 - mmdet - INFO - Iter [550/2790]	lr: 1.000e-02, eta: 1:31:34, time: 2.094, data_time: 0.023, memory: 9046, loss_cls: 0.7084, loss_bbox: 0.9776, loss: 1.6860, grad_norm: 3.1086
+2024-01-18 05:12:21,822 - mmdet - INFO - Iter [600/2790]	lr: 1.000e-02, eta: 1:29:18, time: 2.378, data_time: 0.286, memory: 9046, loss_cls: 0.6475, loss_bbox: 0.9728, loss: 1.6203, grad_norm: 3.1401
+2024-01-18 05:14:06,453 - mmdet - INFO - Iter [650/2790]	lr: 1.000e-02, eta: 1:26:17, time: 2.093, data_time: 0.023, memory: 9046, loss_cls: 0.6434, loss_bbox: 0.9561, loss: 1.5995, grad_norm: 2.9237
+2024-01-18 05:16:03,589 - mmdet - INFO - Iter [700/2790]	lr: 1.000e-02, eta: 1:24:04, time: 2.334, data_time: 0.250, memory: 9046, loss_cls: 0.5804, loss_bbox: 0.9116, loss: 1.4920, grad_norm: 2.5862
+2024-01-18 05:18:00,435 - mmdet - INFO - Iter [750/2790]	lr: 1.000e-02, eta: 1:25:25, time: 3.896, data_time: 1.845, memory: 9046, loss_cls: 0.5874, loss_bbox: 0.8491, loss: 1.4364, grad_norm: 2.9428
+2024-01-18 05:19:46,223 - mmdet - INFO - Iter [800/2790]	lr: 1.000e-02, eta: 1:22:30, time: 2.116, data_time: 0.022, memory: 9046, loss_cls: 0.5936, loss_bbox: 0.8898, loss: 1.4834, grad_norm: 2.9040
+2024-01-18 05:21:43,394 - mmdet - INFO - Iter [850/2790]	lr: 1.000e-02, eta: 1:21:21, time: 2.975, data_time: 0.886, memory: 9047, loss_cls: 0.5517, loss_bbox: 0.8467, loss: 1.3984, grad_norm: 3.0962
+2024-01-18 05:23:28,567 - mmdet - INFO - Iter [900/2790]	lr: 1.000e-02, eta: 1:18:32, time: 2.103, data_time: 0.023, memory: 9047, loss_cls: 0.5446, loss_bbox: 0.8372, loss: 1.3818, grad_norm: 2.7114
+2024-01-18 05:25:25,646 - mmdet - INFO - Iter [950/2790]	lr: 1.000e-02, eta: 1:16:45, time: 2.678, data_time: 0.561, memory: 9047, loss_cls: 0.5328, loss_bbox: 0.8550, loss: 1.3878, grad_norm: 2.5780
+2024-01-18 05:27:10,143 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-18 05:27:10,143 - mmdet - INFO - Iter [1000/2790]	lr: 1.000e-02, eta: 1:14:03, time: 2.090, data_time: 0.023, memory: 9047, loss_cls: 0.5361, loss_bbox: 0.8556, loss: 1.3917, grad_norm: 3.0066
+2024-01-18 05:29:08,152 - mmdet - INFO - Iter [1050/2790]	lr: 1.000e-02, eta: 1:12:04, time: 2.552, data_time: 0.447, memory: 9047, loss_cls: 0.5199, loss_bbox: 0.8145, loss: 1.3344, grad_norm: 2.8770
+2024-01-18 05:30:52,893 - mmdet - INFO - Iter [1100/2790]	lr: 1.000e-02, eta: 1:09:30, time: 2.095, data_time: 0.023, memory: 9047, loss_cls: 0.5164, loss_bbox: 0.8003, loss: 1.3167, grad_norm: 2.9188
+2024-01-18 05:32:50,205 - mmdet - INFO - Iter [1150/2790]	lr: 1.000e-02, eta: 1:07:25, time: 2.442, data_time: 0.353, memory: 9047, loss_cls: 0.5163, loss_bbox: 0.7883, loss: 1.3046, grad_norm: 2.8424
+2024-01-18 05:34:34,760 - mmdet - INFO - Iter [1200/2790]	lr: 1.000e-02, eta: 1:04:57, time: 2.091, data_time: 0.023, memory: 9047, loss_cls: 0.4918, loss_bbox: 0.7909, loss: 1.2827, grad_norm: 2.9426
+2024-01-18 05:36:32,134 - mmdet - INFO - Iter [1250/2790]	lr: 1.000e-02, eta: 1:02:51, time: 2.396, data_time: 0.302, memory: 9047, loss_cls: 0.4951, loss_bbox: 0.7277, loss: 1.2228, grad_norm: 3.3249
+2024-01-18 05:38:17,292 - mmdet - INFO - Iter [1300/2790]	lr: 1.000e-02, eta: 1:00:28, time: 2.103, data_time: 0.023, memory: 9047, loss_cls: 0.5009, loss_bbox: 0.7818, loss: 1.2827, grad_norm: 3.2251
+2024-01-18 05:40:14,181 - mmdet - INFO - Iter [1350/2790]	lr: 1.000e-02, eta: 0:58:21, time: 2.334, data_time: 0.254, memory: 9047, loss_cls: 0.4893, loss_bbox: 0.7677, loss: 1.2570, grad_norm: 3.3019
+2024-01-18 05:42:11,076 - mmdet - INFO - Iter [1400/2790]	lr: 1.000e-02, eta: 0:57:54, time: 4.338, data_time: 2.280, memory: 9047, loss_cls: 0.4135, loss_bbox: 0.6793, loss: 1.0928, grad_norm: 3.4228
+2024-01-18 05:43:56,414 - mmdet - INFO - Iter [1450/2790]	lr: 1.000e-02, eta: 0:55:31, time: 2.107, data_time: 0.023, memory: 9047, loss_cls: 0.4747, loss_bbox: 0.7069, loss: 1.1816, grad_norm: 3.2937
+2024-01-18 05:45:53,088 - mmdet - INFO - Iter [1500/2790]	lr: 1.000e-02, eta: 0:53:50, time: 3.028, data_time: 0.939, memory: 9047, loss_cls: 0.4646, loss_bbox: 0.6989, loss: 1.1635, grad_norm: 3.1161
+2024-01-18 05:47:37,375 - mmdet - INFO - Iter [1550/2790]	lr: 1.000e-02, eta: 0:51:28, time: 2.086, data_time: 0.023, memory: 9047, loss_cls: 0.4529, loss_bbox: 0.7008, loss: 1.1537, grad_norm: 3.1543
+2024-01-18 05:49:34,961 - mmdet - INFO - Iter [1600/2790]	lr: 1.000e-02, eta: 0:49:32, time: 2.717, data_time: 0.600, memory: 9047, loss_cls: 0.4181, loss_bbox: 0.6903, loss: 1.1085, grad_norm: 3.3573
+2024-01-18 05:51:20,358 - mmdet - INFO - Iter [1650/2790]	lr: 1.000e-02, eta: 0:47:14, time: 2.108, data_time: 0.023, memory: 9047, loss_cls: 0.4381, loss_bbox: 0.6861, loss: 1.1242, grad_norm: 3.2852
+2024-01-18 05:53:17,596 - mmdet - INFO - Iter [1700/2790]	lr: 1.000e-02, eta: 0:45:12, time: 2.556, data_time: 0.446, memory: 9047, loss_cls: 0.4419, loss_bbox: 0.6463, loss: 1.0882, grad_norm: 3.0470
+2024-01-18 05:55:01,996 - mmdet - INFO - Iter [1750/2790]	lr: 1.000e-02, eta: 0:42:55, time: 2.088, data_time: 0.023, memory: 9047, loss_cls: 0.4293, loss_bbox: 0.6758, loss: 1.1052, grad_norm: 3.2040
+2024-01-18 05:56:59,519 - mmdet - INFO - Iter [1800/2790]	lr: 1.000e-02, eta: 0:40:51, time: 2.457, data_time: 0.352, memory: 9047, loss_cls: 0.4540, loss_bbox: 0.7117, loss: 1.1657, grad_norm: 3.5959
+2024-01-18 05:58:44,781 - mmdet - INFO - Iter [1850/2790]	lr: 1.000e-02, eta: 0:38:38, time: 2.105, data_time: 0.023, memory: 9047, loss_cls: 0.4367, loss_bbox: 0.6444, loss: 1.0812, grad_norm: 3.0469
+2024-01-18 06:00:41,944 - mmdet - INFO - Iter [1900/2790]	lr: 1.000e-03, eta: 0:36:33, time: 2.386, data_time: 0.291, memory: 9047, loss_cls: 0.3865, loss_bbox: 0.5879, loss: 0.9744, grad_norm: 2.3467
+2024-01-18 06:02:26,621 - mmdet - INFO - Iter [1950/2790]	lr: 1.000e-03, eta: 0:34:21, time: 2.094, data_time: 0.022, memory: 9047, loss_cls: 0.4057, loss_bbox: 0.5685, loss: 0.9743, grad_norm: 2.4486
+2024-01-18 06:04:23,303 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-18 06:04:23,303 - mmdet - INFO - Iter [2000/2790]	lr: 1.000e-03, eta: 0:32:16, time: 2.333, data_time: 0.254, memory: 9047, loss_cls: 0.3875, loss_bbox: 0.5628, loss: 0.9504, grad_norm: 2.1037
+2024-01-18 06:06:19,765 - mmdet - INFO - Iter [2050/2790]	lr: 1.000e-03, eta: 0:30:56, time: 4.823, data_time: 2.775, memory: 9047, loss_cls: 0.3650, loss_bbox: 0.5326, loss: 0.8976, grad_norm: 2.3554
+2024-01-18 06:08:05,156 - mmdet - INFO - Iter [2100/2790]	lr: 1.000e-03, eta: 0:28:44, time: 2.108, data_time: 0.023, memory: 9047, loss_cls: 0.3846, loss_bbox: 0.5483, loss: 0.9329, grad_norm: 2.1092
+2024-01-18 06:10:02,175 - mmdet - INFO - Iter [2150/2790]	lr: 1.000e-03, eta: 0:26:48, time: 3.094, data_time: 1.007, memory: 9047, loss_cls: 0.3583, loss_bbox: 0.5406, loss: 0.8989, grad_norm: 2.1203
+2024-01-18 06:11:47,852 - mmdet - INFO - Iter [2200/2790]	lr: 1.000e-03, eta: 0:24:37, time: 2.114, data_time: 0.023, memory: 9047, loss_cls: 0.3711, loss_bbox: 0.5376, loss: 0.9087, grad_norm: 2.2310
+2024-01-18 06:13:45,692 - mmdet - INFO - Iter [2250/2790]	lr: 1.000e-03, eta: 0:22:35, time: 2.763, data_time: 0.666, memory: 9047, loss_cls: 0.3678, loss_bbox: 0.5188, loss: 0.8866, grad_norm: 2.0745
+2024-01-18 06:15:31,219 - mmdet - INFO - Iter [2300/2790]	lr: 1.000e-03, eta: 0:20:25, time: 2.111, data_time: 0.024, memory: 9047, loss_cls: 0.3713, loss_bbox: 0.5173, loss: 0.8886, grad_norm: 2.2142
+2024-01-18 06:17:29,093 - mmdet - INFO - Iter [2350/2790]	lr: 1.000e-03, eta: 0:18:21, time: 2.583, data_time: 0.477, memory: 9047, loss_cls: 0.3640, loss_bbox: 0.5169, loss: 0.8809, grad_norm: 2.1812
+2024-01-18 06:19:13,513 - mmdet - INFO - Iter [2400/2790]	lr: 1.000e-03, eta: 0:16:12, time: 2.088, data_time: 0.024, memory: 9047, loss_cls: 0.3654, loss_bbox: 0.5173, loss: 0.8826, grad_norm: 2.2004
+2024-01-18 06:21:10,797 - mmdet - INFO - Iter [2450/2790]	lr: 1.000e-03, eta: 0:14:07, time: 2.464, data_time: 0.376, memory: 9047, loss_cls: 0.3707, loss_bbox: 0.4901, loss: 0.8608, grad_norm: 2.2967
+2024-01-18 06:22:55,691 - mmdet - INFO - Iter [2500/2790]	lr: 1.000e-03, eta: 0:12:00, time: 2.098, data_time: 0.024, memory: 9047, loss_cls: 0.3668, loss_bbox: 0.5118, loss: 0.8786, grad_norm: 2.2969
+2024-01-18 06:24:52,845 - mmdet - INFO - Iter [2550/2790]	lr: 1.000e-03, eta: 0:09:56, time: 2.390, data_time: 0.313, memory: 9047, loss_cls: 0.3468, loss_bbox: 0.4895, loss: 0.8362, grad_norm: 2.2545
+2024-01-18 06:26:38,318 - mmdet - INFO - Iter [2600/2790]	lr: 1.000e-03, eta: 0:07:50, time: 2.109, data_time: 0.023, memory: 9047, loss_cls: 0.3734, loss_bbox: 0.5067, loss: 0.8801, grad_norm: 2.3890
+2024-01-18 06:28:36,162 - mmdet - INFO - Iter [2650/2790]	lr: 1.000e-03, eta: 0:05:46, time: 2.363, data_time: 0.267, memory: 9047, loss_cls: 0.3585, loss_bbox: 0.4839, loss: 0.8424, grad_norm: 2.2283
+2024-01-18 06:30:33,319 - mmdet - INFO - Iter [2700/2790]	lr: 1.000e-03, eta: 0:03:48, time: 5.820, data_time: 3.775, memory: 9047, loss_cls: 0.3341, loss_bbox: 0.5329, loss: 0.8670, grad_norm: 2.1491
+2024-01-18 06:32:18,820 - mmdet - INFO - Iter [2750/2790]	lr: 1.000e-03, eta: 0:01:41, time: 2.110, data_time: 0.024, memory: 9047, loss_cls: 0.3504, loss_bbox: 0.4703, loss: 0.8208, grad_norm: 2.3332
+2024-01-18 06:33:44,260 - mmdet - INFO - Saving checkpoint at 30 epochs

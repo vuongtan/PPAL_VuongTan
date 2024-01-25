@@ -1,0 +1,1163 @@
+2024-01-19 02:08:27,828 - mmdet - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.10.12 (main, Nov 20 2023, 15:14:05) [GCC 11.4.0]
+CUDA available: True
+GPU 0: Tesla T4
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 12.2, V12.2.140
+GCC: x86_64-linux-gnu-gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+PyTorch: 1.11.0+cu113
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.5.2 (Git Hash a9302535553c73243c632ad3c4c80beec3d19a1e)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.3
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.2
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.3, CUDNN_VERSION=8.2.0, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.11.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=OFF, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+TorchVision: 0.12.0+cu113
+OpenCV: 4.8.0
+MMCV: 1.5.0
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 11.3
+MMDetection: 2.20.0+f3aac93
+------------------------------------------------------------
+
+2024-01-19 02:08:28,012 - mmdet - INFO - Distributed training: True
+2024-01-19 02:08:28,292 - mmdet - INFO - Config:
+model = dict(
+    type='RetinaNet',
+    backbone=dict(
+        type='ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=False),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint='data/pretrain_models/resnet50-19c8e357.pth')),
+    neck=dict(
+        type='FPN',
+        in_channels=[256, 512, 1024, 2048],
+        out_channels=256,
+        start_level=1,
+        add_extra_convs='on_input',
+        num_outs=5),
+    bbox_head=dict(
+        type='RetinaQualityEMAHead',
+        num_classes=10,
+        in_channels=256,
+        stacked_convs=4,
+        feat_channels=256,
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            octave_base_scale=4,
+            scales_per_octave=3,
+            ratios=[0.5, 1.0, 2.0],
+            strides=[8, 16, 32, 64, 128]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[0.0, 0.0, 0.0, 0.0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
+        loss_cls=dict(
+            type='FocalLoss',
+            use_sigmoid=True,
+            gamma=2.0,
+            alpha=0.25,
+            loss_weight=1.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=1.0),
+        base_momentum=0.99),
+    train_cfg=dict(
+        assigner=dict(
+            type='MaxIoUAssigner',
+            pos_iou_thr=0.5,
+            neg_iou_thr=0.4,
+            min_pos_iou=0,
+            ignore_iof_thr=-1),
+        allowed_border=-1,
+        pos_weight=-1,
+        debug=False),
+    test_cfg=dict(
+        nms_pre=5000,
+        min_bbox_size=0,
+        score_thr=0.05,
+        nms=dict(type='nms', iou_threshold=0.5),
+        max_per_img=100))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001,
+    step=[20])
+runner = dict(type='EpochBasedRunner', max_epochs=30)
+checkpoint_config = dict(interval=30, max_keep_ckpts=1, by_epoch=True)
+log_config = dict(
+    interval=50, hooks=[dict(type='TextLoggerHook', by_epoch=False)])
+custom_hooks = [dict(type='NumClassCheckHook')]
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+mmdet_base = '../../_base_'
+dataset_type = 'CocoDataset'
+data_root = 'data/coco/'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.5),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='Pad', size_divisor=32),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='MultiScaleFlipAug',
+        img_scale=(1333, 800),
+        flip=False,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ])
+]
+data = dict(
+    samples_per_gpu=6,
+    workers_per_gpu=2,
+    train=dict(
+        type='CocoDataset',
+        ann_file=
+        'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5/annotations/labeled.json',
+        img_prefix='data/coco/train2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True),
+            dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+            dict(type='RandomFlip', flip_ratio=0.5),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='Pad', size_divisor=32),
+            dict(type='DefaultFormatBundle'),
+            dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
+        ]),
+    val=dict(
+        type='CocoDataset',
+        ann_file='data/coco/annotations/instances_val2017.json',
+        img_prefix='data/coco/val2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]),
+    test=dict(
+        type='CocoDataset',
+        ann_file='data/coco/annotations/instances_val2017.json',
+        img_prefix='data/coco/val2017/',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='MultiScaleFlipAug',
+                img_scale=(1333, 800),
+                flip=False,
+                transforms=[
+                    dict(type='Resize', keep_ratio=True),
+                    dict(type='RandomFlip'),
+                    dict(
+                        type='Normalize',
+                        mean=[123.675, 116.28, 103.53],
+                        std=[58.395, 57.12, 57.375],
+                        to_rgb=True),
+                    dict(type='Pad', size_divisor=32),
+                    dict(type='ImageToTensor', keys=['img']),
+                    dict(type='Collect', keys=['img'])
+                ])
+        ]))
+labeled_data = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5/annotations/labeled.json'
+unlabeled_data = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5/annotations/unlabeled.json'
+evaluation = dict(interval=999999, metric='bbox')
+work_dir = 'work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5'
+auto_resume = False
+gpu_ids = range(0, 1)
+
+2024-01-19 02:08:28,293 - mmdet - INFO - Set random seed to 361353297, deterministic: False
+2024-01-19 02:08:28,704 - mmdet - INFO - initialize ResNet with init_cfg {'type': 'Pretrained', 'checkpoint': 'data/pretrain_models/resnet50-19c8e357.pth'}
+2024-01-19 02:08:33,766 - mmdet - INFO - initialize FPN with init_cfg {'type': 'Xavier', 'layer': 'Conv2d', 'distribution': 'uniform'}
+2024-01-19 02:08:33,816 - mmdet - INFO - initialize RetinaQualityEMAHead with init_cfg {'type': 'Normal', 'layer': 'Conv2d', 'std': 0.01, 'override': {'type': 'Normal', 'name': 'retina_cls', 'std': 0.01, 'bias_prob': 0.01}}
+Name of parameter - Initialization information
+
+backbone.conv1.weight - torch.Size([64, 3, 7, 7]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv1.weight - torch.Size([64, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.0.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.0.downsample.1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv1.weight - torch.Size([64, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.1.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv1.weight - torch.Size([64, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn1.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn1.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv2.weight - torch.Size([64, 64, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn2.weight - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn2.bias - torch.Size([64]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.conv3.weight - torch.Size([256, 64, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn3.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer1.2.bn3.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv1.weight - torch.Size([128, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.0.weight - torch.Size([512, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.0.downsample.1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.1.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.2.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv1.weight - torch.Size([128, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn1.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn1.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv2.weight - torch.Size([128, 128, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn2.weight - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn2.bias - torch.Size([128]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.conv3.weight - torch.Size([512, 128, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn3.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer2.3.bn3.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv1.weight - torch.Size([256, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.0.weight - torch.Size([1024, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.1.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.0.downsample.1.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.1.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.2.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.3.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.4.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv1.weight - torch.Size([256, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn1.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn1.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv2.weight - torch.Size([256, 256, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn2.weight - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn2.bias - torch.Size([256]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.conv3.weight - torch.Size([1024, 256, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn3.weight - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer3.5.bn3.bias - torch.Size([1024]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv1.weight - torch.Size([512, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.0.weight - torch.Size([2048, 1024, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.1.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.0.downsample.1.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv1.weight - torch.Size([512, 2048, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.1.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv1.weight - torch.Size([512, 2048, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn1.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn1.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv2.weight - torch.Size([512, 512, 3, 3]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn2.weight - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn2.bias - torch.Size([512]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.conv3.weight - torch.Size([2048, 512, 1, 1]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn3.weight - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+backbone.layer4.2.bn3.bias - torch.Size([2048]): 
+PretrainedInit: load from data/pretrain_models/resnet50-19c8e357.pth 
+
+neck.lateral_convs.0.conv.weight - torch.Size([256, 512, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.lateral_convs.1.conv.weight - torch.Size([256, 1024, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.lateral_convs.2.conv.weight - torch.Size([256, 2048, 1, 1]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.lateral_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.3.conv.weight - torch.Size([256, 2048, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+neck.fpn_convs.4.conv.weight - torch.Size([256, 256, 3, 3]): 
+XavierInit: gain=1, distribution=uniform, bias=0 
+
+neck.fpn_convs.4.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.cls_convs.3.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.cls_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.0.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.0.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.1.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.1.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.2.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.2.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.reg_convs.3.conv.weight - torch.Size([256, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.reg_convs.3.conv.bias - torch.Size([256]): 
+The value is the same before and after calling `init_weights` of RetinaNet  
+
+bbox_head.retina_cls.weight - torch.Size([90, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=-4.59511985013459 
+
+bbox_head.retina_cls.bias - torch.Size([90]): 
+NormalInit: mean=0, std=0.01, bias=-4.59511985013459 
+
+bbox_head.retina_reg.weight - torch.Size([36, 256, 3, 3]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+bbox_head.retina_reg.bias - torch.Size([36]): 
+NormalInit: mean=0, std=0.01, bias=0 
+2024-01-19 02:08:40,230 - mmdet - INFO - Start running, host: root@452ef04e990c, work_dir: /content/drive/MyDrive/PPALVuongTan/PPAL/work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5
+2024-01-19 02:08:40,230 - mmdet - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) NumClassCheckHook                  
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) DistEvalHook                       
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) NumClassCheckHook                  
+(NORMAL      ) DistSamplerSeedHook                
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2024-01-19 02:08:40,230 - mmdet - INFO - workflow: [('train', 1)], max: 30 epochs
+2024-01-19 02:08:40,230 - mmdet - INFO - Checkpoints will be saved to /content/drive/MyDrive/PPALVuongTan/PPAL/work_dirs/retinanet_coco_ppal_5rounds_2percent_to_10percent/round5 by HardDiskBackend.
+2024-01-19 02:11:00,954 - mmdet - INFO - Iter [50/13950]	lr: 9.890e-04, eta: 10:51:57, time: 2.814, data_time: 0.946, memory: 9062, loss_cls: 1.1438, loss_bbox: 2.1797, loss: 3.3234, grad_norm: 6.6068
+2024-01-19 02:13:09,197 - mmdet - INFO - Iter [100/13950]	lr: 1.988e-03, eta: 10:20:50, time: 2.565, data_time: 0.567, memory: 9803, loss_cls: 1.1024, loss_bbox: 1.1455, loss: 2.2479, grad_norm: 8.9007
+2024-01-19 02:15:15,328 - mmdet - INFO - Iter [150/13950]	lr: 2.987e-03, eta: 10:05:47, time: 2.523, data_time: 0.523, memory: 9803, loss_cls: 0.8878, loss_bbox: 1.1100, loss: 1.9977, grad_norm: 11.3283
+2024-01-19 02:17:18,786 - mmdet - INFO - Iter [200/13950]	lr: 3.986e-03, eta: 9:54:09, time: 2.469, data_time: 0.464, memory: 9803, loss_cls: 1.0061, loss_bbox: 1.1231, loss: 2.1292, grad_norm: 8.2861
+2024-01-19 02:19:26,544 - mmdet - INFO - Iter [250/13950]	lr: 4.985e-03, eta: 9:50:17, time: 2.555, data_time: 0.557, memory: 9803, loss_cls: 0.9487, loss_bbox: 1.1782, loss: 2.1269, grad_norm: 4.8652
+2024-01-19 02:21:31,160 - mmdet - INFO - Iter [300/13950]	lr: 5.984e-03, eta: 9:44:36, time: 2.492, data_time: 0.498, memory: 9803, loss_cls: 0.9686, loss_bbox: 1.1216, loss: 2.0902, grad_norm: 4.6199
+2024-01-19 02:23:36,593 - mmdet - INFO - Iter [350/13950]	lr: 6.983e-03, eta: 9:40:29, time: 2.509, data_time: 0.523, memory: 9803, loss_cls: 0.8717, loss_bbox: 1.0904, loss: 1.9621, grad_norm: 4.0020
+2024-01-19 02:25:41,928 - mmdet - INFO - Iter [400/13950]	lr: 7.982e-03, eta: 9:36:49, time: 2.507, data_time: 0.519, memory: 9803, loss_cls: 0.9101, loss_bbox: 1.0801, loss: 1.9902, grad_norm: 3.2321
+2024-01-19 02:27:48,716 - mmdet - INFO - Iter [450/13950]	lr: 8.981e-03, eta: 9:34:14, time: 2.536, data_time: 0.564, memory: 9803, loss_cls: 0.8704, loss_bbox: 1.1772, loss: 2.0476, grad_norm: 2.2695
+2024-01-19 02:29:46,045 - mmdet - INFO - Iter [500/13950]	lr: 9.980e-03, eta: 9:26:42, time: 2.311, data_time: 0.340, memory: 9803, loss_cls: 0.8861, loss_bbox: 1.1879, loss: 2.0741, grad_norm: 1.5515
+2024-01-19 02:31:25,266 - mmdet - INFO - Iter [550/13950]	lr: 1.000e-02, eta: 9:13:33, time: 1.984, data_time: 0.020, memory: 9803, loss_cls: 0.8044, loss_bbox: 1.0200, loss: 1.8244, grad_norm: 2.4255
+2024-01-19 02:33:05,172 - mmdet - INFO - Iter [600/13950]	lr: 1.000e-02, eta: 9:02:35, time: 1.998, data_time: 0.021, memory: 9803, loss_cls: 0.7369, loss_bbox: 1.0168, loss: 1.7537, grad_norm: 2.6413
+2024-01-19 02:34:45,198 - mmdet - INFO - Iter [650/13950]	lr: 1.000e-02, eta: 8:53:05, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.7622, loss_bbox: 0.9727, loss: 1.7349, grad_norm: 3.0577
+2024-01-19 02:36:25,250 - mmdet - INFO - Iter [700/13950]	lr: 1.000e-02, eta: 8:44:42, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.7356, loss_bbox: 0.9300, loss: 1.6656, grad_norm: 2.5134
+2024-01-19 02:38:05,198 - mmdet - INFO - Iter [750/13950]	lr: 1.000e-02, eta: 8:37:11, time: 1.999, data_time: 0.021, memory: 9803, loss_cls: 0.9140, loss_bbox: 0.9550, loss: 1.8690, grad_norm: 3.6093
+2024-01-19 02:39:45,741 - mmdet - INFO - Iter [800/13950]	lr: 1.000e-02, eta: 8:30:34, time: 2.011, data_time: 0.023, memory: 9803, loss_cls: 0.7109, loss_bbox: 0.9216, loss: 1.6325, grad_norm: 2.4206
+2024-01-19 02:41:25,748 - mmdet - INFO - Iter [850/13950]	lr: 1.000e-02, eta: 8:24:24, time: 2.000, data_time: 0.022, memory: 9803, loss_cls: 0.6429, loss_bbox: 0.9382, loss: 1.5811, grad_norm: 2.8796
+2024-01-19 02:43:05,410 - mmdet - INFO - Iter [900/13950]	lr: 1.000e-02, eta: 8:18:39, time: 1.993, data_time: 0.022, memory: 9803, loss_cls: 0.7952, loss_bbox: 0.9410, loss: 1.7362, grad_norm: 3.4926
+2024-01-19 02:44:57,480 - mmdet - INFO - Iter [950/13950]	lr: 1.000e-02, eta: 8:19:45, time: 2.558, data_time: 0.568, memory: 9803, loss_cls: 0.7772, loss_bbox: 0.9159, loss: 1.6930, grad_norm: 2.3920
+2024-01-19 02:46:37,473 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 02:46:37,474 - mmdet - INFO - Iter [1000/13950]	lr: 1.000e-02, eta: 8:14:32, time: 2.000, data_time: 0.020, memory: 9803, loss_cls: 0.7190, loss_bbox: 0.9605, loss: 1.6795, grad_norm: 1.9513
+2024-01-19 02:48:17,749 - mmdet - INFO - Iter [1050/13950]	lr: 1.000e-02, eta: 8:09:41, time: 2.005, data_time: 0.021, memory: 9803, loss_cls: 0.6650, loss_bbox: 0.9641, loss: 1.6291, grad_norm: 2.0784
+2024-01-19 02:49:57,957 - mmdet - INFO - Iter [1100/13950]	lr: 1.000e-02, eta: 8:05:08, time: 2.004, data_time: 0.022, memory: 9803, loss_cls: 0.6798, loss_bbox: 0.8853, loss: 1.5651, grad_norm: 2.1427
+2024-01-19 02:51:38,183 - mmdet - INFO - Iter [1150/13950]	lr: 1.000e-02, eta: 8:00:49, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.6686, loss_bbox: 0.8735, loss: 1.5421, grad_norm: 2.3106
+2024-01-19 02:53:18,263 - mmdet - INFO - Iter [1200/13950]	lr: 1.000e-02, eta: 7:56:43, time: 2.002, data_time: 0.022, memory: 9803, loss_cls: 0.6821, loss_bbox: 0.9079, loss: 1.5900, grad_norm: 2.3486
+2024-01-19 02:54:57,924 - mmdet - INFO - Iter [1250/13950]	lr: 1.000e-02, eta: 7:52:43, time: 1.993, data_time: 0.022, memory: 9803, loss_cls: 0.6224, loss_bbox: 0.8838, loss: 1.5063, grad_norm: 2.1666
+2024-01-19 02:56:37,781 - mmdet - INFO - Iter [1300/13950]	lr: 1.000e-02, eta: 7:48:57, time: 1.997, data_time: 0.022, memory: 9803, loss_cls: 0.6063, loss_bbox: 0.8804, loss: 1.4868, grad_norm: 1.9826
+2024-01-19 02:58:18,052 - mmdet - INFO - Iter [1350/13950]	lr: 1.000e-02, eta: 7:45:23, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.6150, loss_bbox: 0.8576, loss: 1.4725, grad_norm: 2.2482
+2024-01-19 03:00:10,081 - mmdet - INFO - Iter [1400/13950]	lr: 1.000e-02, eta: 7:58:24, time: 4.205, data_time: 2.249, memory: 9803, loss_cls: 0.5849, loss_bbox: 0.9300, loss: 1.5149, grad_norm: 2.6749
+2024-01-19 03:01:50,093 - mmdet - INFO - Iter [1450/13950]	lr: 1.000e-02, eta: 7:54:26, time: 2.000, data_time: 0.021, memory: 9803, loss_cls: 0.6097, loss_bbox: 0.8269, loss: 1.4366, grad_norm: 2.2771
+2024-01-19 03:03:30,528 - mmdet - INFO - Iter [1500/13950]	lr: 1.000e-02, eta: 7:50:41, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.5651, loss_bbox: 0.8608, loss: 1.4258, grad_norm: 2.0483
+2024-01-19 03:05:10,579 - mmdet - INFO - Iter [1550/13950]	lr: 1.000e-02, eta: 7:47:00, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.5967, loss_bbox: 0.8734, loss: 1.4701, grad_norm: 2.3739
+2024-01-19 03:06:51,135 - mmdet - INFO - Iter [1600/13950]	lr: 1.000e-02, eta: 7:43:31, time: 2.011, data_time: 0.022, memory: 9803, loss_cls: 0.5792, loss_bbox: 0.8639, loss: 1.4431, grad_norm: 2.0645
+2024-01-19 03:08:31,546 - mmdet - INFO - Iter [1650/13950]	lr: 1.000e-02, eta: 7:40:08, time: 2.008, data_time: 0.023, memory: 9803, loss_cls: 0.5613, loss_bbox: 0.7925, loss: 1.3538, grad_norm: 2.2697
+2024-01-19 03:10:11,490 - mmdet - INFO - Iter [1700/13950]	lr: 1.000e-02, eta: 7:36:47, time: 1.999, data_time: 0.022, memory: 9803, loss_cls: 0.5919, loss_bbox: 0.8525, loss: 1.4443, grad_norm: 2.5855
+2024-01-19 03:11:51,815 - mmdet - INFO - Iter [1750/13950]	lr: 1.000e-02, eta: 7:33:35, time: 2.006, data_time: 0.022, memory: 9803, loss_cls: 0.5597, loss_bbox: 0.8155, loss: 1.3753, grad_norm: 2.1873
+2024-01-19 03:13:32,069 - mmdet - INFO - Iter [1800/13950]	lr: 1.000e-02, eta: 7:30:27, time: 2.005, data_time: 0.023, memory: 9803, loss_cls: 0.5704, loss_bbox: 0.7807, loss: 1.3511, grad_norm: 2.4659
+2024-01-19 03:15:12,012 - mmdet - INFO - Iter [1850/13950]	lr: 1.000e-02, eta: 7:27:22, time: 1.999, data_time: 0.023, memory: 9803, loss_cls: 0.5709, loss_bbox: 0.7920, loss: 1.3629, grad_norm: 2.2781
+2024-01-19 03:17:04,674 - mmdet - INFO - Iter [1900/13950]	lr: 1.000e-02, eta: 7:25:55, time: 2.293, data_time: 0.298, memory: 9803, loss_cls: 0.5408, loss_bbox: 0.7392, loss: 1.2800, grad_norm: 2.2809
+2024-01-19 03:18:44,414 - mmdet - INFO - Iter [1950/13950]	lr: 1.000e-02, eta: 7:22:54, time: 1.995, data_time: 0.022, memory: 9803, loss_cls: 0.5375, loss_bbox: 0.8093, loss: 1.3467, grad_norm: 2.2075
+2024-01-19 03:20:24,574 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 03:20:24,574 - mmdet - INFO - Iter [2000/13950]	lr: 1.000e-02, eta: 7:20:01, time: 2.003, data_time: 0.022, memory: 9803, loss_cls: 0.5521, loss_bbox: 0.8269, loss: 1.3790, grad_norm: 2.4712
+2024-01-19 03:22:03,742 - mmdet - INFO - Iter [2050/13950]	lr: 1.000e-02, eta: 7:17:04, time: 1.983, data_time: 0.022, memory: 9803, loss_cls: 0.5253, loss_bbox: 0.7679, loss: 1.2932, grad_norm: 2.5206
+2024-01-19 03:23:44,253 - mmdet - INFO - Iter [2100/13950]	lr: 1.000e-02, eta: 7:14:20, time: 2.010, data_time: 0.022, memory: 9803, loss_cls: 0.5131, loss_bbox: 0.7664, loss: 1.2795, grad_norm: 2.5142
+2024-01-19 03:25:24,375 - mmdet - INFO - Iter [2150/13950]	lr: 1.000e-02, eta: 7:11:36, time: 2.002, data_time: 0.022, memory: 9803, loss_cls: 0.5225, loss_bbox: 0.7755, loss: 1.2980, grad_norm: 2.3268
+2024-01-19 03:27:04,024 - mmdet - INFO - Iter [2200/13950]	lr: 1.000e-02, eta: 7:08:52, time: 1.993, data_time: 0.023, memory: 9803, loss_cls: 0.5295, loss_bbox: 0.7845, loss: 1.3140, grad_norm: 2.5261
+2024-01-19 03:28:43,919 - mmdet - INFO - Iter [2250/13950]	lr: 1.000e-02, eta: 7:06:13, time: 1.998, data_time: 0.022, memory: 9803, loss_cls: 0.5315, loss_bbox: 0.7612, loss: 1.2928, grad_norm: 2.3840
+2024-01-19 03:30:24,251 - mmdet - INFO - Iter [2300/13950]	lr: 1.000e-02, eta: 7:03:38, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.5522, loss_bbox: 0.7325, loss: 1.2847, grad_norm: 2.5049
+2024-01-19 03:32:16,207 - mmdet - INFO - Iter [2350/13950]	lr: 1.000e-02, eta: 7:02:57, time: 2.456, data_time: 0.463, memory: 9803, loss_cls: 0.7286, loss_bbox: 0.7778, loss: 1.5064, grad_norm: 2.7048
+2024-01-19 03:33:56,132 - mmdet - INFO - Iter [2400/13950]	lr: 1.000e-02, eta: 7:00:22, time: 1.999, data_time: 0.022, memory: 9803, loss_cls: 0.5795, loss_bbox: 0.7500, loss: 1.3295, grad_norm: 2.4768
+2024-01-19 03:35:36,125 - mmdet - INFO - Iter [2450/13950]	lr: 1.000e-02, eta: 6:57:49, time: 2.000, data_time: 0.022, memory: 9803, loss_cls: 0.5605, loss_bbox: 0.7688, loss: 1.3293, grad_norm: 2.4678
+2024-01-19 03:37:16,385 - mmdet - INFO - Iter [2500/13950]	lr: 1.000e-02, eta: 6:55:20, time: 2.005, data_time: 0.023, memory: 9803, loss_cls: 0.5380, loss_bbox: 0.7929, loss: 1.3309, grad_norm: 2.4933
+2024-01-19 03:38:56,540 - mmdet - INFO - Iter [2550/13950]	lr: 1.000e-02, eta: 6:52:53, time: 2.003, data_time: 0.023, memory: 9803, loss_cls: 0.5812, loss_bbox: 0.7658, loss: 1.3469, grad_norm: 2.6569
+2024-01-19 03:40:36,986 - mmdet - INFO - Iter [2600/13950]	lr: 1.000e-02, eta: 6:50:28, time: 2.009, data_time: 0.023, memory: 9803, loss_cls: 0.5478, loss_bbox: 0.7535, loss: 1.3013, grad_norm: 2.5205
+2024-01-19 03:42:16,318 - mmdet - INFO - Iter [2650/13950]	lr: 1.000e-02, eta: 6:48:01, time: 1.987, data_time: 0.023, memory: 9803, loss_cls: 0.5082, loss_bbox: 0.7360, loss: 1.2442, grad_norm: 2.1128
+2024-01-19 03:43:56,187 - mmdet - INFO - Iter [2700/13950]	lr: 1.000e-02, eta: 6:45:37, time: 1.997, data_time: 0.023, memory: 9803, loss_cls: 0.5162, loss_bbox: 0.7489, loss: 1.2651, grad_norm: 2.6018
+2024-01-19 03:45:36,488 - mmdet - INFO - Iter [2750/13950]	lr: 1.000e-02, eta: 6:43:17, time: 2.006, data_time: 0.023, memory: 9803, loss_cls: 0.5933, loss_bbox: 0.7312, loss: 1.3246, grad_norm: 2.5328
+2024-01-19 03:47:28,696 - mmdet - INFO - Iter [2800/13950]	lr: 1.000e-02, eta: 6:44:38, time: 3.111, data_time: 1.131, memory: 9803, loss_cls: 0.5065, loss_bbox: 0.7745, loss: 1.2809, grad_norm: 2.3030
+2024-01-19 03:49:08,780 - mmdet - INFO - Iter [2850/13950]	lr: 1.000e-02, eta: 6:42:15, time: 2.002, data_time: 0.022, memory: 9803, loss_cls: 0.5166, loss_bbox: 0.7208, loss: 1.2374, grad_norm: 2.2946
+2024-01-19 03:50:49,061 - mmdet - INFO - Iter [2900/13950]	lr: 1.000e-02, eta: 6:39:54, time: 2.006, data_time: 0.022, memory: 9803, loss_cls: 0.5077, loss_bbox: 0.6869, loss: 1.1947, grad_norm: 2.1249
+2024-01-19 03:52:29,187 - mmdet - INFO - Iter [2950/13950]	lr: 1.000e-02, eta: 6:37:34, time: 2.003, data_time: 0.022, memory: 9803, loss_cls: 0.5205, loss_bbox: 0.7485, loss: 1.2690, grad_norm: 2.5749
+2024-01-19 03:54:09,433 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 03:54:09,433 - mmdet - INFO - Iter [3000/13950]	lr: 1.000e-02, eta: 6:35:16, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4959, loss_bbox: 0.7221, loss: 1.2180, grad_norm: 2.4696
+2024-01-19 03:55:49,294 - mmdet - INFO - Iter [3050/13950]	lr: 1.000e-02, eta: 6:32:57, time: 1.997, data_time: 0.022, memory: 9803, loss_cls: 0.4980, loss_bbox: 0.7174, loss: 1.2155, grad_norm: 2.4259
+2024-01-19 03:57:29,408 - mmdet - INFO - Iter [3100/13950]	lr: 1.000e-02, eta: 6:30:41, time: 2.002, data_time: 0.023, memory: 9803, loss_cls: 0.4700, loss_bbox: 0.6933, loss: 1.1633, grad_norm: 2.2028
+2024-01-19 03:59:08,791 - mmdet - INFO - Iter [3150/13950]	lr: 1.000e-02, eta: 6:28:23, time: 1.988, data_time: 0.023, memory: 9803, loss_cls: 0.5060, loss_bbox: 0.7179, loss: 1.2239, grad_norm: 2.3841
+2024-01-19 04:00:48,977 - mmdet - INFO - Iter [3200/13950]	lr: 1.000e-02, eta: 6:26:10, time: 2.004, data_time: 0.023, memory: 9803, loss_cls: 0.4770, loss_bbox: 0.7013, loss: 1.1783, grad_norm: 2.3603
+2024-01-19 04:02:29,440 - mmdet - INFO - Iter [3250/13950]	lr: 1.000e-02, eta: 6:23:58, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4916, loss_bbox: 0.7130, loss: 1.2046, grad_norm: 2.4382
+2024-01-19 04:04:21,829 - mmdet - INFO - Iter [3300/13950]	lr: 1.000e-02, eta: 6:22:27, time: 2.256, data_time: 0.267, memory: 9803, loss_cls: 0.4782, loss_bbox: 0.6753, loss: 1.1535, grad_norm: 2.1849
+2024-01-19 04:06:01,060 - mmdet - INFO - Iter [3350/13950]	lr: 1.000e-02, eta: 6:20:12, time: 1.985, data_time: 0.022, memory: 9803, loss_cls: 0.4761, loss_bbox: 0.6735, loss: 1.1496, grad_norm: 2.4082
+2024-01-19 04:07:41,389 - mmdet - INFO - Iter [3400/13950]	lr: 1.000e-02, eta: 6:18:02, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.5032, loss_bbox: 0.7004, loss: 1.2036, grad_norm: 2.4703
+2024-01-19 04:09:21,827 - mmdet - INFO - Iter [3450/13950]	lr: 1.000e-02, eta: 6:15:53, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4921, loss_bbox: 0.7166, loss: 1.2088, grad_norm: 2.3156
+2024-01-19 04:11:01,448 - mmdet - INFO - Iter [3500/13950]	lr: 1.000e-02, eta: 6:13:42, time: 1.992, data_time: 0.022, memory: 9803, loss_cls: 0.5035, loss_bbox: 0.6760, loss: 1.1795, grad_norm: 2.4495
+2024-01-19 04:12:41,840 - mmdet - INFO - Iter [3550/13950]	lr: 1.000e-02, eta: 6:11:35, time: 2.008, data_time: 0.023, memory: 9803, loss_cls: 0.5015, loss_bbox: 0.7130, loss: 1.2145, grad_norm: 2.5587
+2024-01-19 04:14:21,983 - mmdet - INFO - Iter [3600/13950]	lr: 1.000e-02, eta: 6:09:28, time: 2.003, data_time: 0.023, memory: 9803, loss_cls: 0.4684, loss_bbox: 0.6772, loss: 1.1457, grad_norm: 2.3002
+2024-01-19 04:16:01,482 - mmdet - INFO - Iter [3650/13950]	lr: 1.000e-02, eta: 6:07:19, time: 1.990, data_time: 0.022, memory: 9803, loss_cls: 0.4753, loss_bbox: 0.6634, loss: 1.1387, grad_norm: 2.3765
+2024-01-19 04:17:40,638 - mmdet - INFO - Iter [3700/13950]	lr: 1.000e-02, eta: 6:05:10, time: 1.983, data_time: 0.022, memory: 9803, loss_cls: 0.4722, loss_bbox: 0.6912, loss: 1.1634, grad_norm: 2.6163
+2024-01-19 04:19:33,303 - mmdet - INFO - Iter [3750/13950]	lr: 1.000e-02, eta: 6:03:58, time: 2.390, data_time: 0.391, memory: 9803, loss_cls: 0.4568, loss_bbox: 0.6687, loss: 1.1254, grad_norm: 2.3551
+2024-01-19 04:21:13,488 - mmdet - INFO - Iter [3800/13950]	lr: 1.000e-02, eta: 6:01:52, time: 2.004, data_time: 0.022, memory: 9803, loss_cls: 0.4736, loss_bbox: 0.6738, loss: 1.1474, grad_norm: 2.3587
+2024-01-19 04:22:53,818 - mmdet - INFO - Iter [3850/13950]	lr: 1.000e-02, eta: 5:59:48, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.4624, loss_bbox: 0.6439, loss: 1.1063, grad_norm: 2.3232
+2024-01-19 04:24:34,083 - mmdet - INFO - Iter [3900/13950]	lr: 1.000e-02, eta: 5:57:44, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4682, loss_bbox: 0.6796, loss: 1.1478, grad_norm: 2.4481
+2024-01-19 04:26:14,289 - mmdet - INFO - Iter [3950/13950]	lr: 1.000e-02, eta: 5:55:41, time: 2.004, data_time: 0.023, memory: 9803, loss_cls: 0.4740, loss_bbox: 0.6870, loss: 1.1610, grad_norm: 2.3581
+2024-01-19 04:27:54,807 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 04:27:54,807 - mmdet - INFO - Iter [4000/13950]	lr: 1.000e-02, eta: 5:53:39, time: 2.010, data_time: 0.023, memory: 9803, loss_cls: 0.4588, loss_bbox: 0.6754, loss: 1.1342, grad_norm: 2.2532
+2024-01-19 04:29:35,215 - mmdet - INFO - Iter [4050/13950]	lr: 1.000e-02, eta: 5:51:37, time: 2.008, data_time: 0.022, memory: 9803, loss_cls: 0.4508, loss_bbox: 0.6633, loss: 1.1141, grad_norm: 2.2516
+2024-01-19 04:31:15,671 - mmdet - INFO - Iter [4100/13950]	lr: 1.000e-02, eta: 5:49:36, time: 2.009, data_time: 0.023, memory: 9803, loss_cls: 0.4628, loss_bbox: 0.6570, loss: 1.1198, grad_norm: 2.3276
+2024-01-19 04:32:56,035 - mmdet - INFO - Iter [4150/13950]	lr: 1.000e-02, eta: 5:47:35, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.4705, loss_bbox: 0.6946, loss: 1.1651, grad_norm: 2.4291
+2024-01-19 04:34:47,813 - mmdet - INFO - Iter [4200/13950]	lr: 1.000e-02, eta: 5:47:01, time: 2.756, data_time: 0.759, memory: 9803, loss_cls: 0.4872, loss_bbox: 0.6465, loss: 1.1337, grad_norm: 2.3771
+2024-01-19 04:36:27,713 - mmdet - INFO - Iter [4250/13950]	lr: 1.000e-02, eta: 5:44:59, time: 1.998, data_time: 0.022, memory: 9803, loss_cls: 0.4303, loss_bbox: 0.6162, loss: 1.0465, grad_norm: 2.4143
+2024-01-19 04:38:08,104 - mmdet - INFO - Iter [4300/13950]	lr: 1.000e-02, eta: 5:42:58, time: 2.008, data_time: 0.022, memory: 9803, loss_cls: 0.4642, loss_bbox: 0.6471, loss: 1.1113, grad_norm: 2.4190
+2024-01-19 04:39:48,461 - mmdet - INFO - Iter [4350/13950]	lr: 1.000e-02, eta: 5:40:57, time: 2.007, data_time: 0.022, memory: 9803, loss_cls: 0.4541, loss_bbox: 0.6507, loss: 1.1048, grad_norm: 2.4273
+2024-01-19 04:41:28,513 - mmdet - INFO - Iter [4400/13950]	lr: 1.000e-02, eta: 5:38:57, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.4443, loss_bbox: 0.6659, loss: 1.1102, grad_norm: 2.3082
+2024-01-19 04:43:08,792 - mmdet - INFO - Iter [4450/13950]	lr: 1.000e-02, eta: 5:36:57, time: 2.006, data_time: 0.022, memory: 9803, loss_cls: 0.4599, loss_bbox: 0.6523, loss: 1.1122, grad_norm: 2.6019
+2024-01-19 04:44:49,222 - mmdet - INFO - Iter [4500/13950]	lr: 1.000e-02, eta: 5:34:58, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4458, loss_bbox: 0.6868, loss: 1.1326, grad_norm: 2.6252
+2024-01-19 04:46:29,655 - mmdet - INFO - Iter [4550/13950]	lr: 1.000e-02, eta: 5:32:59, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4737, loss_bbox: 0.6495, loss: 1.1232, grad_norm: 2.7241
+2024-01-19 04:48:09,574 - mmdet - INFO - Iter [4600/13950]	lr: 1.000e-02, eta: 5:31:00, time: 1.998, data_time: 0.022, memory: 9803, loss_cls: 0.4487, loss_bbox: 0.6506, loss: 1.0993, grad_norm: 2.3011
+2024-01-19 04:49:49,689 - mmdet - INFO - Iter [4650/13950]	lr: 1.000e-02, eta: 5:29:02, time: 2.002, data_time: 0.022, memory: 9803, loss_cls: 0.4784, loss_bbox: 0.6578, loss: 1.1363, grad_norm: 2.7061
+2024-01-19 04:51:42,304 - mmdet - INFO - Iter [4700/13950]	lr: 1.000e-02, eta: 5:27:27, time: 2.236, data_time: 0.244, memory: 9803, loss_cls: 0.4588, loss_bbox: 0.6222, loss: 1.0810, grad_norm: 2.5897
+2024-01-19 04:53:22,280 - mmdet - INFO - Iter [4750/13950]	lr: 1.000e-02, eta: 5:25:29, time: 2.000, data_time: 0.022, memory: 9803, loss_cls: 0.4421, loss_bbox: 0.6146, loss: 1.0567, grad_norm: 2.2804
+2024-01-19 04:55:02,680 - mmdet - INFO - Iter [4800/13950]	lr: 1.000e-02, eta: 5:23:32, time: 2.008, data_time: 0.022, memory: 9803, loss_cls: 0.4638, loss_bbox: 0.6215, loss: 1.0853, grad_norm: 2.5399
+2024-01-19 04:56:42,182 - mmdet - INFO - Iter [4850/13950]	lr: 1.000e-02, eta: 5:21:33, time: 1.990, data_time: 0.023, memory: 9803, loss_cls: 0.4334, loss_bbox: 0.6286, loss: 1.0619, grad_norm: 2.3234
+2024-01-19 04:58:22,568 - mmdet - INFO - Iter [4900/13950]	lr: 1.000e-02, eta: 5:19:37, time: 2.008, data_time: 0.023, memory: 9803, loss_cls: 0.4389, loss_bbox: 0.6080, loss: 1.0469, grad_norm: 2.3194
+2024-01-19 05:00:02,622 - mmdet - INFO - Iter [4950/13950]	lr: 1.000e-02, eta: 5:17:40, time: 2.001, data_time: 0.023, memory: 9803, loss_cls: 0.4444, loss_bbox: 0.6817, loss: 1.1260, grad_norm: 2.8793
+2024-01-19 05:01:42,887 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 05:01:42,887 - mmdet - INFO - Iter [5000/13950]	lr: 1.000e-02, eta: 5:15:44, time: 2.005, data_time: 0.023, memory: 9803, loss_cls: 0.4957, loss_bbox: 0.6487, loss: 1.1444, grad_norm: 2.8514
+2024-01-19 05:03:23,264 - mmdet - INFO - Iter [5050/13950]	lr: 1.000e-02, eta: 5:13:49, time: 2.008, data_time: 0.023, memory: 9803, loss_cls: 0.4608, loss_bbox: 0.6322, loss: 1.0929, grad_norm: 2.4306
+2024-01-19 05:05:03,208 - mmdet - INFO - Iter [5100/13950]	lr: 1.000e-02, eta: 5:11:53, time: 1.999, data_time: 0.023, memory: 9803, loss_cls: 0.4624, loss_bbox: 0.6459, loss: 1.1082, grad_norm: 2.6207
+2024-01-19 05:06:55,892 - mmdet - INFO - Iter [5150/13950]	lr: 1.000e-02, eta: 5:10:26, time: 2.335, data_time: 0.337, memory: 9803, loss_cls: 0.4842, loss_bbox: 0.6108, loss: 1.0950, grad_norm: 2.7008
+2024-01-19 05:08:35,682 - mmdet - INFO - Iter [5200/13950]	lr: 1.000e-02, eta: 5:08:30, time: 1.996, data_time: 0.022, memory: 9803, loss_cls: 0.4617, loss_bbox: 0.6084, loss: 1.0701, grad_norm: 2.3382
+2024-01-19 05:10:15,654 - mmdet - INFO - Iter [5250/13950]	lr: 1.000e-02, eta: 5:06:34, time: 1.999, data_time: 0.022, memory: 9803, loss_cls: 0.4219, loss_bbox: 0.6262, loss: 1.0481, grad_norm: 2.2780
+2024-01-19 05:11:56,053 - mmdet - INFO - Iter [5300/13950]	lr: 1.000e-02, eta: 5:04:40, time: 2.008, data_time: 0.022, memory: 9803, loss_cls: 0.4348, loss_bbox: 0.6199, loss: 1.0547, grad_norm: 2.5878
+2024-01-19 05:13:36,649 - mmdet - INFO - Iter [5350/13950]	lr: 1.000e-02, eta: 5:02:46, time: 2.012, data_time: 0.022, memory: 9803, loss_cls: 0.4474, loss_bbox: 0.6348, loss: 1.0822, grad_norm: 2.5869
+2024-01-19 05:15:17,073 - mmdet - INFO - Iter [5400/13950]	lr: 1.000e-02, eta: 5:00:52, time: 2.008, data_time: 0.023, memory: 9803, loss_cls: 0.4329, loss_bbox: 0.6333, loss: 1.0663, grad_norm: 2.6568
+2024-01-19 05:16:56,978 - mmdet - INFO - Iter [5450/13950]	lr: 1.000e-02, eta: 4:58:58, time: 1.998, data_time: 0.022, memory: 9803, loss_cls: 0.4530, loss_bbox: 0.6309, loss: 1.0838, grad_norm: 2.5198
+2024-01-19 05:18:37,442 - mmdet - INFO - Iter [5500/13950]	lr: 1.000e-02, eta: 4:57:05, time: 2.009, data_time: 0.023, memory: 9803, loss_cls: 0.4335, loss_bbox: 0.6165, loss: 1.0500, grad_norm: 2.4029
+2024-01-19 05:20:17,971 - mmdet - INFO - Iter [5550/13950]	lr: 1.000e-02, eta: 4:55:12, time: 2.011, data_time: 0.023, memory: 9803, loss_cls: 0.4219, loss_bbox: 0.6114, loss: 1.0334, grad_norm: 2.5214
+2024-01-19 05:22:10,758 - mmdet - INFO - Iter [5600/13950]	lr: 1.000e-02, eta: 4:54:02, time: 2.582, data_time: 0.581, memory: 9803, loss_cls: 0.4338, loss_bbox: 0.5904, loss: 1.0242, grad_norm: 2.6469
+2024-01-19 05:23:51,051 - mmdet - INFO - Iter [5650/13950]	lr: 1.000e-02, eta: 4:52:08, time: 2.006, data_time: 0.022, memory: 9803, loss_cls: 0.4340, loss_bbox: 0.6061, loss: 1.0401, grad_norm: 2.5020
+2024-01-19 05:25:31,119 - mmdet - INFO - Iter [5700/13950]	lr: 1.000e-02, eta: 4:50:15, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.4395, loss_bbox: 0.5986, loss: 1.0380, grad_norm: 2.5086
+2024-01-19 05:27:11,375 - mmdet - INFO - Iter [5750/13950]	lr: 1.000e-02, eta: 4:48:21, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4159, loss_bbox: 0.6298, loss: 1.0456, grad_norm: 2.3374
+2024-01-19 05:28:51,138 - mmdet - INFO - Iter [5800/13950]	lr: 1.000e-02, eta: 4:46:28, time: 1.995, data_time: 0.022, memory: 9803, loss_cls: 0.4575, loss_bbox: 0.6153, loss: 1.0728, grad_norm: 2.8106
+2024-01-19 05:30:31,508 - mmdet - INFO - Iter [5850/13950]	lr: 1.000e-02, eta: 4:44:35, time: 2.007, data_time: 0.022, memory: 9803, loss_cls: 0.4397, loss_bbox: 0.6139, loss: 1.0536, grad_norm: 2.8625
+2024-01-19 05:32:11,852 - mmdet - INFO - Iter [5900/13950]	lr: 1.000e-02, eta: 4:42:43, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.4407, loss_bbox: 0.6033, loss: 1.0440, grad_norm: 2.4421
+2024-01-19 05:33:51,722 - mmdet - INFO - Iter [5950/13950]	lr: 1.000e-02, eta: 4:40:50, time: 1.997, data_time: 0.023, memory: 9803, loss_cls: 0.4223, loss_bbox: 0.6167, loss: 1.0389, grad_norm: 2.3895
+2024-01-19 05:35:31,749 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 05:35:31,749 - mmdet - INFO - Iter [6000/13950]	lr: 1.000e-02, eta: 4:38:58, time: 2.001, data_time: 0.023, memory: 9803, loss_cls: 0.4299, loss_bbox: 0.5951, loss: 1.0249, grad_norm: 2.4190
+2024-01-19 05:37:23,830 - mmdet - INFO - Iter [6050/13950]	lr: 1.000e-02, eta: 4:39:28, time: 4.180, data_time: 2.196, memory: 9803, loss_cls: 0.4357, loss_bbox: 0.6125, loss: 1.0482, grad_norm: 2.9204
+2024-01-19 05:39:03,976 - mmdet - INFO - Iter [6100/13950]	lr: 1.000e-02, eta: 4:37:34, time: 2.003, data_time: 0.022, memory: 9803, loss_cls: 0.4199, loss_bbox: 0.5730, loss: 0.9929, grad_norm: 2.4106
+2024-01-19 05:40:44,521 - mmdet - INFO - Iter [6150/13950]	lr: 1.000e-02, eta: 4:35:41, time: 2.011, data_time: 0.022, memory: 9803, loss_cls: 0.4129, loss_bbox: 0.5845, loss: 0.9973, grad_norm: 2.4075
+2024-01-19 05:42:24,531 - mmdet - INFO - Iter [6200/13950]	lr: 1.000e-02, eta: 4:33:48, time: 2.000, data_time: 0.022, memory: 9803, loss_cls: 0.4291, loss_bbox: 0.5915, loss: 1.0206, grad_norm: 2.5606
+2024-01-19 05:44:04,364 - mmdet - INFO - Iter [6250/13950]	lr: 1.000e-02, eta: 4:31:54, time: 1.997, data_time: 0.023, memory: 9803, loss_cls: 0.4188, loss_bbox: 0.6182, loss: 1.0370, grad_norm: 2.4358
+2024-01-19 05:45:44,804 - mmdet - INFO - Iter [6300/13950]	lr: 1.000e-02, eta: 4:30:01, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4201, loss_bbox: 0.5692, loss: 0.9893, grad_norm: 2.4288
+2024-01-19 05:47:25,050 - mmdet - INFO - Iter [6350/13950]	lr: 1.000e-02, eta: 4:28:09, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4045, loss_bbox: 0.5933, loss: 0.9978, grad_norm: 2.6212
+2024-01-19 05:49:04,903 - mmdet - INFO - Iter [6400/13950]	lr: 1.000e-02, eta: 4:26:16, time: 1.997, data_time: 0.023, memory: 9803, loss_cls: 0.4304, loss_bbox: 0.5762, loss: 1.0066, grad_norm: 2.5620
+2024-01-19 05:50:45,296 - mmdet - INFO - Iter [6450/13950]	lr: 1.000e-02, eta: 4:24:24, time: 2.008, data_time: 0.022, memory: 9803, loss_cls: 0.4324, loss_bbox: 0.6176, loss: 1.0500, grad_norm: 2.6319
+2024-01-19 05:52:25,642 - mmdet - INFO - Iter [6500/13950]	lr: 1.000e-02, eta: 4:22:32, time: 2.007, data_time: 0.022, memory: 9803, loss_cls: 0.4141, loss_bbox: 0.6074, loss: 1.0216, grad_norm: 2.6489
+2024-01-19 05:54:17,798 - mmdet - INFO - Iter [6550/13950]	lr: 1.000e-02, eta: 4:20:56, time: 2.282, data_time: 0.298, memory: 9803, loss_cls: 0.4355, loss_bbox: 0.5796, loss: 1.0151, grad_norm: 2.4431
+2024-01-19 05:55:57,608 - mmdet - INFO - Iter [6600/13950]	lr: 1.000e-02, eta: 4:19:03, time: 1.996, data_time: 0.022, memory: 9803, loss_cls: 0.4074, loss_bbox: 0.5640, loss: 0.9714, grad_norm: 2.4752
+2024-01-19 05:57:37,880 - mmdet - INFO - Iter [6650/13950]	lr: 1.000e-02, eta: 4:17:11, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.3982, loss_bbox: 0.5926, loss: 0.9909, grad_norm: 2.6605
+2024-01-19 05:59:18,216 - mmdet - INFO - Iter [6700/13950]	lr: 1.000e-02, eta: 4:15:20, time: 2.007, data_time: 0.022, memory: 9803, loss_cls: 0.3993, loss_bbox: 0.5571, loss: 0.9564, grad_norm: 2.4948
+2024-01-19 06:00:58,461 - mmdet - INFO - Iter [6750/13950]	lr: 1.000e-02, eta: 4:13:28, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4158, loss_bbox: 0.5717, loss: 0.9875, grad_norm: 2.4919
+2024-01-19 06:02:38,507 - mmdet - INFO - Iter [6800/13950]	lr: 1.000e-02, eta: 4:11:37, time: 2.001, data_time: 0.022, memory: 9803, loss_cls: 0.4097, loss_bbox: 0.5663, loss: 0.9761, grad_norm: 2.6047
+2024-01-19 06:04:18,665 - mmdet - INFO - Iter [6850/13950]	lr: 1.000e-02, eta: 4:09:46, time: 2.003, data_time: 0.022, memory: 9803, loss_cls: 0.4111, loss_bbox: 0.5817, loss: 0.9928, grad_norm: 2.6292
+2024-01-19 06:05:59,110 - mmdet - INFO - Iter [6900/13950]	lr: 1.000e-02, eta: 4:07:55, time: 2.009, data_time: 0.023, memory: 9803, loss_cls: 0.4288, loss_bbox: 0.6087, loss: 1.0375, grad_norm: 2.7201
+2024-01-19 06:07:39,663 - mmdet - INFO - Iter [6950/13950]	lr: 1.000e-02, eta: 4:06:05, time: 2.011, data_time: 0.023, memory: 9803, loss_cls: 0.4265, loss_bbox: 0.6059, loss: 1.0324, grad_norm: 2.5738
+2024-01-19 06:09:31,915 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 06:09:31,916 - mmdet - INFO - Iter [7000/13950]	lr: 1.000e-02, eta: 4:04:36, time: 2.448, data_time: 0.462, memory: 9803, loss_cls: 0.4067, loss_bbox: 0.5770, loss: 0.9837, grad_norm: 2.4615
+2024-01-19 06:11:11,650 - mmdet - INFO - Iter [7050/13950]	lr: 1.000e-02, eta: 4:02:45, time: 1.995, data_time: 0.021, memory: 9803, loss_cls: 0.4155, loss_bbox: 0.5470, loss: 0.9625, grad_norm: 2.5163
+2024-01-19 06:12:52,082 - mmdet - INFO - Iter [7100/13950]	lr: 1.000e-02, eta: 4:00:54, time: 2.009, data_time: 0.022, memory: 9803, loss_cls: 0.4086, loss_bbox: 0.5571, loss: 0.9657, grad_norm: 2.4706
+2024-01-19 06:14:32,194 - mmdet - INFO - Iter [7150/13950]	lr: 1.000e-02, eta: 3:59:03, time: 2.002, data_time: 0.022, memory: 9803, loss_cls: 0.3899, loss_bbox: 0.5612, loss: 0.9511, grad_norm: 2.4122
+2024-01-19 06:16:12,049 - mmdet - INFO - Iter [7200/13950]	lr: 1.000e-02, eta: 3:57:13, time: 1.997, data_time: 0.022, memory: 9803, loss_cls: 0.4043, loss_bbox: 0.5606, loss: 0.9649, grad_norm: 2.5907
+2024-01-19 06:17:52,345 - mmdet - INFO - Iter [7250/13950]	lr: 1.000e-02, eta: 3:55:23, time: 2.006, data_time: 0.022, memory: 9803, loss_cls: 0.3915, loss_bbox: 0.5659, loss: 0.9574, grad_norm: 2.2541
+2024-01-19 06:19:32,692 - mmdet - INFO - Iter [7300/13950]	lr: 1.000e-02, eta: 3:53:33, time: 2.007, data_time: 0.023, memory: 9803, loss_cls: 0.3936, loss_bbox: 0.5810, loss: 0.9746, grad_norm: 2.5438
+2024-01-19 06:21:13,214 - mmdet - INFO - Iter [7350/13950]	lr: 1.000e-02, eta: 3:51:43, time: 2.010, data_time: 0.023, memory: 9803, loss_cls: 0.4151, loss_bbox: 0.5468, loss: 0.9619, grad_norm: 2.5233
+2024-01-19 06:22:53,485 - mmdet - INFO - Iter [7400/13950]	lr: 1.000e-02, eta: 3:49:53, time: 2.005, data_time: 0.022, memory: 9803, loss_cls: 0.4009, loss_bbox: 0.5501, loss: 0.9510, grad_norm: 2.5335
+2024-01-19 06:24:45,560 - mmdet - INFO - Iter [7450/13950]	lr: 1.000e-02, eta: 3:48:52, time: 3.123, data_time: 1.147, memory: 9803, loss_cls: 0.3824, loss_bbox: 0.5230, loss: 0.9054, grad_norm: 2.0641
+2024-01-19 06:26:26,202 - mmdet - INFO - Iter [7500/13950]	lr: 1.000e-02, eta: 3:47:02, time: 2.013, data_time: 0.022, memory: 9803, loss_cls: 0.3951, loss_bbox: 0.5554, loss: 0.9506, grad_norm: 2.6207
+2024-01-19 06:28:05,727 - mmdet - INFO - Iter [7550/13950]	lr: 1.000e-02, eta: 3:45:11, time: 1.990, data_time: 0.022, memory: 9803, loss_cls: 0.3953, loss_bbox: 0.5294, loss: 0.9247, grad_norm: 2.5398
+2024-01-19 06:29:45,778 - mmdet - INFO - Iter [7600/13950]	lr: 1.000e-02, eta: 3:43:21, time: 2.001, data_time: 0.023, memory: 9804, loss_cls: 0.3949, loss_bbox: 0.5481, loss: 0.9430, grad_norm: 2.5135
+2024-01-19 06:31:26,048 - mmdet - INFO - Iter [7650/13950]	lr: 1.000e-02, eta: 3:41:31, time: 2.005, data_time: 0.022, memory: 9804, loss_cls: 0.3935, loss_bbox: 0.5492, loss: 0.9427, grad_norm: 2.7124
+2024-01-19 06:33:06,670 - mmdet - INFO - Iter [7700/13950]	lr: 1.000e-02, eta: 3:39:42, time: 2.012, data_time: 0.023, memory: 9804, loss_cls: 0.3857, loss_bbox: 0.5521, loss: 0.9378, grad_norm: 2.5499
+2024-01-19 06:34:46,708 - mmdet - INFO - Iter [7750/13950]	lr: 1.000e-02, eta: 3:37:52, time: 2.001, data_time: 0.022, memory: 9804, loss_cls: 0.3853, loss_bbox: 0.5521, loss: 0.9375, grad_norm: 2.7006
+2024-01-19 06:36:27,030 - mmdet - INFO - Iter [7800/13950]	lr: 1.000e-02, eta: 3:36:03, time: 2.006, data_time: 0.023, memory: 9804, loss_cls: 0.3936, loss_bbox: 0.5526, loss: 0.9462, grad_norm: 2.6246
+2024-01-19 06:38:07,169 - mmdet - INFO - Iter [7850/13950]	lr: 1.000e-02, eta: 3:34:13, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3915, loss_bbox: 0.5658, loss: 0.9573, grad_norm: 2.7143
+2024-01-19 06:39:47,539 - mmdet - INFO - Iter [7900/13950]	lr: 1.000e-02, eta: 3:32:24, time: 2.007, data_time: 0.023, memory: 9804, loss_cls: 0.3882, loss_bbox: 0.5571, loss: 0.9453, grad_norm: 2.6564
+2024-01-19 06:41:39,805 - mmdet - INFO - Iter [7950/13950]	lr: 1.000e-02, eta: 3:30:44, time: 2.254, data_time: 0.269, memory: 9804, loss_cls: 0.3687, loss_bbox: 0.5257, loss: 0.8944, grad_norm: 2.3699
+2024-01-19 06:43:19,599 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 06:43:19,599 - mmdet - INFO - Iter [8000/13950]	lr: 1.000e-02, eta: 3:28:55, time: 1.996, data_time: 0.022, memory: 9804, loss_cls: 0.3769, loss_bbox: 0.5234, loss: 0.9003, grad_norm: 2.5849
+2024-01-19 06:44:59,295 - mmdet - INFO - Iter [8050/13950]	lr: 1.000e-02, eta: 3:27:05, time: 1.994, data_time: 0.022, memory: 9804, loss_cls: 0.3941, loss_bbox: 0.5452, loss: 0.9392, grad_norm: 3.3062
+2024-01-19 06:46:38,988 - mmdet - INFO - Iter [8100/13950]	lr: 1.000e-02, eta: 3:25:16, time: 1.994, data_time: 0.023, memory: 9804, loss_cls: 0.4114, loss_bbox: 0.5761, loss: 0.9875, grad_norm: 2.7446
+2024-01-19 06:48:18,850 - mmdet - INFO - Iter [8150/13950]	lr: 1.000e-02, eta: 3:23:27, time: 1.997, data_time: 0.022, memory: 9804, loss_cls: 0.4162, loss_bbox: 0.5513, loss: 0.9676, grad_norm: 2.9183
+2024-01-19 06:49:59,297 - mmdet - INFO - Iter [8200/13950]	lr: 1.000e-02, eta: 3:21:38, time: 2.009, data_time: 0.022, memory: 9804, loss_cls: 0.4007, loss_bbox: 0.5449, loss: 0.9456, grad_norm: 2.7193
+2024-01-19 06:51:39,685 - mmdet - INFO - Iter [8250/13950]	lr: 1.000e-02, eta: 3:19:50, time: 2.008, data_time: 0.022, memory: 9804, loss_cls: 0.3978, loss_bbox: 0.5860, loss: 0.9839, grad_norm: 2.7789
+2024-01-19 06:53:20,218 - mmdet - INFO - Iter [8300/13950]	lr: 1.000e-02, eta: 3:18:01, time: 2.011, data_time: 0.022, memory: 9804, loss_cls: 0.4026, loss_bbox: 0.5415, loss: 0.9442, grad_norm: 2.6262
+2024-01-19 06:55:00,643 - mmdet - INFO - Iter [8350/13950]	lr: 1.000e-02, eta: 3:16:13, time: 2.008, data_time: 0.023, memory: 9804, loss_cls: 0.3806, loss_bbox: 0.5402, loss: 0.9208, grad_norm: 2.5225
+2024-01-19 06:56:53,349 - mmdet - INFO - Iter [8400/13950]	lr: 1.000e-02, eta: 3:14:38, time: 2.399, data_time: 0.401, memory: 9804, loss_cls: 0.3888, loss_bbox: 0.5031, loss: 0.8919, grad_norm: 2.5555
+2024-01-19 06:58:33,518 - mmdet - INFO - Iter [8450/13950]	lr: 1.000e-02, eta: 3:12:49, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3694, loss_bbox: 0.5292, loss: 0.8986, grad_norm: 2.6082
+2024-01-19 07:00:13,825 - mmdet - INFO - Iter [8500/13950]	lr: 1.000e-02, eta: 3:11:01, time: 2.006, data_time: 0.023, memory: 9804, loss_cls: 0.3784, loss_bbox: 0.5345, loss: 0.9129, grad_norm: 2.6606
+2024-01-19 07:01:54,386 - mmdet - INFO - Iter [8550/13950]	lr: 1.000e-02, eta: 3:09:13, time: 2.011, data_time: 0.022, memory: 9804, loss_cls: 0.3843, loss_bbox: 0.5539, loss: 0.9382, grad_norm: 2.7382
+2024-01-19 07:03:34,278 - mmdet - INFO - Iter [8600/13950]	lr: 1.000e-02, eta: 3:07:24, time: 1.998, data_time: 0.023, memory: 9804, loss_cls: 0.3806, loss_bbox: 0.5390, loss: 0.9196, grad_norm: 2.7244
+2024-01-19 07:05:14,153 - mmdet - INFO - Iter [8650/13950]	lr: 1.000e-02, eta: 3:05:36, time: 1.997, data_time: 0.023, memory: 9804, loss_cls: 0.3858, loss_bbox: 0.5339, loss: 0.9197, grad_norm: 2.6284
+2024-01-19 07:06:54,625 - mmdet - INFO - Iter [8700/13950]	lr: 1.000e-02, eta: 3:03:48, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3828, loss_bbox: 0.5239, loss: 0.9067, grad_norm: 2.5352
+2024-01-19 07:08:34,294 - mmdet - INFO - Iter [8750/13950]	lr: 1.000e-02, eta: 3:02:00, time: 1.993, data_time: 0.023, memory: 9804, loss_cls: 0.3873, loss_bbox: 0.5060, loss: 0.8933, grad_norm: 2.6784
+2024-01-19 07:10:14,657 - mmdet - INFO - Iter [8800/13950]	lr: 1.000e-02, eta: 3:00:12, time: 2.007, data_time: 0.023, memory: 9804, loss_cls: 0.3805, loss_bbox: 0.5391, loss: 0.9196, grad_norm: 2.7653
+2024-01-19 07:12:06,907 - mmdet - INFO - Iter [8850/13950]	lr: 1.000e-02, eta: 2:58:46, time: 2.735, data_time: 0.770, memory: 9804, loss_cls: 0.3673, loss_bbox: 0.5002, loss: 0.8676, grad_norm: 2.5770
+2024-01-19 07:13:47,226 - mmdet - INFO - Iter [8900/13950]	lr: 1.000e-02, eta: 2:56:58, time: 2.006, data_time: 0.021, memory: 9804, loss_cls: 0.3899, loss_bbox: 0.4994, loss: 0.8893, grad_norm: 2.8887
+2024-01-19 07:15:26,223 - mmdet - INFO - Iter [8950/13950]	lr: 1.000e-02, eta: 2:55:09, time: 1.980, data_time: 0.022, memory: 9804, loss_cls: 0.3730, loss_bbox: 0.5024, loss: 0.8753, grad_norm: 2.5573
+2024-01-19 07:17:06,149 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 07:17:06,150 - mmdet - INFO - Iter [9000/13950]	lr: 1.000e-02, eta: 2:53:21, time: 1.999, data_time: 0.022, memory: 9804, loss_cls: 0.3838, loss_bbox: 0.5168, loss: 0.9006, grad_norm: 2.8129
+2024-01-19 07:18:46,583 - mmdet - INFO - Iter [9050/13950]	lr: 1.000e-02, eta: 2:51:34, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3989, loss_bbox: 0.5277, loss: 0.9266, grad_norm: 2.7791
+2024-01-19 07:20:27,060 - mmdet - INFO - Iter [9100/13950]	lr: 1.000e-02, eta: 2:49:46, time: 2.010, data_time: 0.023, memory: 9804, loss_cls: 0.3681, loss_bbox: 0.5267, loss: 0.8948, grad_norm: 2.5246
+2024-01-19 07:22:07,494 - mmdet - INFO - Iter [9150/13950]	lr: 1.000e-02, eta: 2:47:59, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3719, loss_bbox: 0.5368, loss: 0.9087, grad_norm: 2.6426
+2024-01-19 07:23:47,448 - mmdet - INFO - Iter [9200/13950]	lr: 1.000e-02, eta: 2:46:11, time: 1.999, data_time: 0.022, memory: 9804, loss_cls: 0.3914, loss_bbox: 0.5418, loss: 0.9331, grad_norm: 2.8055
+2024-01-19 07:25:27,805 - mmdet - INFO - Iter [9250/13950]	lr: 1.000e-02, eta: 2:44:24, time: 2.007, data_time: 0.023, memory: 9804, loss_cls: 0.3718, loss_bbox: 0.5169, loss: 0.8887, grad_norm: 2.6825
+2024-01-19 07:27:08,214 - mmdet - INFO - Iter [9300/13950]	lr: 1.000e-02, eta: 2:42:37, time: 2.008, data_time: 0.023, memory: 9804, loss_cls: 0.3876, loss_bbox: 0.5663, loss: 0.9540, grad_norm: 3.0817
+2024-01-19 07:29:00,847 - mmdet - INFO - Iter [9350/13950]	lr: 1.000e-03, eta: 2:40:55, time: 2.236, data_time: 0.247, memory: 9804, loss_cls: 0.3592, loss_bbox: 0.5201, loss: 0.8793, grad_norm: 2.1895
+2024-01-19 07:30:41,087 - mmdet - INFO - Iter [9400/13950]	lr: 1.000e-03, eta: 2:39:08, time: 2.005, data_time: 0.022, memory: 9804, loss_cls: 0.3468, loss_bbox: 0.4855, loss: 0.8323, grad_norm: 2.0079
+2024-01-19 07:32:21,410 - mmdet - INFO - Iter [9450/13950]	lr: 1.000e-03, eta: 2:37:21, time: 2.006, data_time: 0.022, memory: 9804, loss_cls: 0.3462, loss_bbox: 0.4626, loss: 0.8088, grad_norm: 2.0638
+2024-01-19 07:34:01,503 - mmdet - INFO - Iter [9500/13950]	lr: 1.000e-03, eta: 2:35:34, time: 2.002, data_time: 0.022, memory: 9804, loss_cls: 0.3468, loss_bbox: 0.4725, loss: 0.8193, grad_norm: 1.9515
+2024-01-19 07:35:41,301 - mmdet - INFO - Iter [9550/13950]	lr: 1.000e-03, eta: 2:33:46, time: 1.996, data_time: 0.022, memory: 9804, loss_cls: 0.3330, loss_bbox: 0.4676, loss: 0.8007, grad_norm: 1.9709
+2024-01-19 07:37:21,725 - mmdet - INFO - Iter [9600/13950]	lr: 1.000e-03, eta: 2:32:00, time: 2.008, data_time: 0.023, memory: 9804, loss_cls: 0.3453, loss_bbox: 0.4567, loss: 0.8021, grad_norm: 2.1319
+2024-01-19 07:39:01,797 - mmdet - INFO - Iter [9650/13950]	lr: 1.000e-03, eta: 2:30:13, time: 2.001, data_time: 0.022, memory: 9804, loss_cls: 0.3393, loss_bbox: 0.4474, loss: 0.7867, grad_norm: 2.1688
+2024-01-19 07:40:41,697 - mmdet - INFO - Iter [9700/13950]	lr: 1.000e-03, eta: 2:28:26, time: 1.998, data_time: 0.022, memory: 9804, loss_cls: 0.3402, loss_bbox: 0.4647, loss: 0.8049, grad_norm: 2.1221
+2024-01-19 07:42:22,127 - mmdet - INFO - Iter [9750/13950]	lr: 1.000e-03, eta: 2:26:39, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3407, loss_bbox: 0.4478, loss: 0.7885, grad_norm: 2.1464
+2024-01-19 07:44:15,055 - mmdet - INFO - Iter [9800/13950]	lr: 1.000e-03, eta: 2:25:00, time: 2.343, data_time: 0.348, memory: 9804, loss_cls: 0.3281, loss_bbox: 0.4532, loss: 0.7813, grad_norm: 1.9980
+2024-01-19 07:45:55,130 - mmdet - INFO - Iter [9850/13950]	lr: 1.000e-03, eta: 2:23:13, time: 2.001, data_time: 0.023, memory: 9804, loss_cls: 0.3245, loss_bbox: 0.4663, loss: 0.7909, grad_norm: 2.0199
+2024-01-19 07:47:35,460 - mmdet - INFO - Iter [9900/13950]	lr: 1.000e-03, eta: 2:21:26, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.3223, loss_bbox: 0.4362, loss: 0.7585, grad_norm: 2.0198
+2024-01-19 07:49:15,748 - mmdet - INFO - Iter [9950/13950]	lr: 1.000e-03, eta: 2:19:40, time: 2.006, data_time: 0.022, memory: 9804, loss_cls: 0.3276, loss_bbox: 0.4457, loss: 0.7732, grad_norm: 2.0400
+2024-01-19 07:50:55,782 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 07:50:55,782 - mmdet - INFO - Iter [10000/13950]	lr: 1.000e-03, eta: 2:17:53, time: 2.001, data_time: 0.022, memory: 9804, loss_cls: 0.3327, loss_bbox: 0.4474, loss: 0.7800, grad_norm: 2.0453
+2024-01-19 07:52:34,789 - mmdet - INFO - Iter [10050/13950]	lr: 1.000e-03, eta: 2:16:06, time: 1.980, data_time: 0.022, memory: 9804, loss_cls: 0.3304, loss_bbox: 0.4570, loss: 0.7874, grad_norm: 2.1776
+2024-01-19 07:54:14,963 - mmdet - INFO - Iter [10100/13950]	lr: 1.000e-03, eta: 2:14:20, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3211, loss_bbox: 0.4277, loss: 0.7488, grad_norm: 2.0810
+2024-01-19 07:55:55,256 - mmdet - INFO - Iter [10150/13950]	lr: 1.000e-03, eta: 2:12:33, time: 2.006, data_time: 0.022, memory: 9804, loss_cls: 0.3336, loss_bbox: 0.4429, loss: 0.7765, grad_norm: 2.2380
+2024-01-19 07:57:34,343 - mmdet - INFO - Iter [10200/13950]	lr: 1.000e-03, eta: 2:10:47, time: 1.982, data_time: 0.022, memory: 9804, loss_cls: 0.3282, loss_bbox: 0.4513, loss: 0.7795, grad_norm: 2.0544
+2024-01-19 07:59:26,846 - mmdet - INFO - Iter [10250/13950]	lr: 1.000e-03, eta: 2:09:11, time: 2.574, data_time: 0.582, memory: 9804, loss_cls: 0.3134, loss_bbox: 0.4640, loss: 0.7774, grad_norm: 2.0143
+2024-01-19 08:01:07,025 - mmdet - INFO - Iter [10300/13950]	lr: 1.000e-03, eta: 2:07:24, time: 2.004, data_time: 0.023, memory: 9804, loss_cls: 0.3283, loss_bbox: 0.4415, loss: 0.7698, grad_norm: 2.0533
+2024-01-19 08:02:47,315 - mmdet - INFO - Iter [10350/13950]	lr: 1.000e-03, eta: 2:05:38, time: 2.006, data_time: 0.022, memory: 9804, loss_cls: 0.3195, loss_bbox: 0.4395, loss: 0.7591, grad_norm: 2.0577
+2024-01-19 08:04:27,803 - mmdet - INFO - Iter [10400/13950]	lr: 1.000e-03, eta: 2:03:52, time: 2.010, data_time: 0.023, memory: 9804, loss_cls: 0.3180, loss_bbox: 0.4453, loss: 0.7633, grad_norm: 2.1138
+2024-01-19 08:06:07,871 - mmdet - INFO - Iter [10450/13950]	lr: 1.000e-03, eta: 2:02:06, time: 2.001, data_time: 0.023, memory: 9804, loss_cls: 0.3218, loss_bbox: 0.4361, loss: 0.7580, grad_norm: 2.0766
+2024-01-19 08:07:48,463 - mmdet - INFO - Iter [10500/13950]	lr: 1.000e-03, eta: 2:00:20, time: 2.012, data_time: 0.023, memory: 9804, loss_cls: 0.3232, loss_bbox: 0.4318, loss: 0.7550, grad_norm: 2.0812
+2024-01-19 08:09:28,835 - mmdet - INFO - Iter [10550/13950]	lr: 1.000e-03, eta: 1:58:34, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.3315, loss_bbox: 0.4351, loss: 0.7666, grad_norm: 2.2534
+2024-01-19 08:11:09,384 - mmdet - INFO - Iter [10600/13950]	lr: 1.000e-03, eta: 1:56:48, time: 2.011, data_time: 0.023, memory: 9804, loss_cls: 0.3186, loss_bbox: 0.4372, loss: 0.7558, grad_norm: 1.9940
+2024-01-19 08:12:49,424 - mmdet - INFO - Iter [10650/13950]	lr: 1.000e-03, eta: 1:55:02, time: 2.001, data_time: 0.022, memory: 9804, loss_cls: 0.3200, loss_bbox: 0.4377, loss: 0.7578, grad_norm: 2.1395
+2024-01-19 08:14:41,600 - mmdet - INFO - Iter [10700/13950]	lr: 1.000e-03, eta: 1:53:50, time: 4.259, data_time: 2.277, memory: 9804, loss_cls: 0.3182, loss_bbox: 0.4753, loss: 0.7935, grad_norm: 2.0402
+2024-01-19 08:16:22,374 - mmdet - INFO - Iter [10750/13950]	lr: 1.000e-03, eta: 1:52:04, time: 2.015, data_time: 0.022, memory: 9804, loss_cls: 0.3235, loss_bbox: 0.4220, loss: 0.7455, grad_norm: 2.1921
+2024-01-19 08:18:02,075 - mmdet - INFO - Iter [10800/13950]	lr: 1.000e-03, eta: 1:50:17, time: 1.994, data_time: 0.022, memory: 9804, loss_cls: 0.3182, loss_bbox: 0.4179, loss: 0.7361, grad_norm: 2.2109
+2024-01-19 08:19:42,075 - mmdet - INFO - Iter [10850/13950]	lr: 1.000e-03, eta: 1:48:31, time: 2.000, data_time: 0.022, memory: 9804, loss_cls: 0.3189, loss_bbox: 0.4367, loss: 0.7556, grad_norm: 2.1012
+2024-01-19 08:21:21,940 - mmdet - INFO - Iter [10900/13950]	lr: 1.000e-03, eta: 1:46:44, time: 1.997, data_time: 0.022, memory: 9804, loss_cls: 0.3146, loss_bbox: 0.4352, loss: 0.7498, grad_norm: 2.1428
+2024-01-19 08:23:02,392 - mmdet - INFO - Iter [10950/13950]	lr: 1.000e-03, eta: 1:44:58, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3183, loss_bbox: 0.4534, loss: 0.7718, grad_norm: 2.1632
+2024-01-19 08:24:42,883 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 08:24:42,883 - mmdet - INFO - Iter [11000/13950]	lr: 1.000e-03, eta: 1:43:12, time: 2.010, data_time: 0.023, memory: 9804, loss_cls: 0.3154, loss_bbox: 0.4224, loss: 0.7378, grad_norm: 2.2113
+2024-01-19 08:26:22,753 - mmdet - INFO - Iter [11050/13950]	lr: 1.000e-03, eta: 1:41:25, time: 1.997, data_time: 0.022, memory: 9804, loss_cls: 0.3231, loss_bbox: 0.4257, loss: 0.7488, grad_norm: 2.1999
+2024-01-19 08:28:02,543 - mmdet - INFO - Iter [11100/13950]	lr: 1.000e-03, eta: 1:39:39, time: 1.996, data_time: 0.023, memory: 9804, loss_cls: 0.3069, loss_bbox: 0.4425, loss: 0.7494, grad_norm: 2.0097
+2024-01-19 08:29:43,080 - mmdet - INFO - Iter [11150/13950]	lr: 1.000e-03, eta: 1:37:53, time: 2.011, data_time: 0.023, memory: 9804, loss_cls: 0.3206, loss_bbox: 0.4353, loss: 0.7559, grad_norm: 2.0169
+2024-01-19 08:31:35,784 - mmdet - INFO - Iter [11200/13950]	lr: 1.000e-03, eta: 1:36:11, time: 2.294, data_time: 0.298, memory: 9804, loss_cls: 0.3332, loss_bbox: 0.4351, loss: 0.7683, grad_norm: 2.1985
+2024-01-19 08:33:16,284 - mmdet - INFO - Iter [11250/13950]	lr: 1.000e-03, eta: 1:34:25, time: 2.010, data_time: 0.022, memory: 9804, loss_cls: 0.3093, loss_bbox: 0.4130, loss: 0.7223, grad_norm: 2.0596
+2024-01-19 08:34:56,414 - mmdet - INFO - Iter [11300/13950]	lr: 1.000e-03, eta: 1:32:39, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3127, loss_bbox: 0.4304, loss: 0.7431, grad_norm: 2.0472
+2024-01-19 08:36:36,780 - mmdet - INFO - Iter [11350/13950]	lr: 1.000e-03, eta: 1:30:53, time: 2.007, data_time: 0.023, memory: 9804, loss_cls: 0.3110, loss_bbox: 0.4207, loss: 0.7317, grad_norm: 2.0299
+2024-01-19 08:38:17,029 - mmdet - INFO - Iter [11400/13950]	lr: 1.000e-03, eta: 1:29:07, time: 2.005, data_time: 0.022, memory: 9804, loss_cls: 0.3239, loss_bbox: 0.4477, loss: 0.7716, grad_norm: 2.1766
+2024-01-19 08:39:57,632 - mmdet - INFO - Iter [11450/13950]	lr: 1.000e-03, eta: 1:27:21, time: 2.012, data_time: 0.023, memory: 9804, loss_cls: 0.3266, loss_bbox: 0.4270, loss: 0.7536, grad_norm: 2.2532
+2024-01-19 08:41:38,169 - mmdet - INFO - Iter [11500/13950]	lr: 1.000e-03, eta: 1:25:35, time: 2.011, data_time: 0.022, memory: 9804, loss_cls: 0.3170, loss_bbox: 0.4276, loss: 0.7445, grad_norm: 2.1940
+2024-01-19 08:43:18,720 - mmdet - INFO - Iter [11550/13950]	lr: 1.000e-03, eta: 1:23:50, time: 2.011, data_time: 0.023, memory: 9804, loss_cls: 0.3106, loss_bbox: 0.4199, loss: 0.7304, grad_norm: 2.2648
+2024-01-19 08:44:59,288 - mmdet - INFO - Iter [11600/13950]	lr: 1.000e-03, eta: 1:22:04, time: 2.011, data_time: 0.023, memory: 9804, loss_cls: 0.3161, loss_bbox: 0.4233, loss: 0.7394, grad_norm: 2.0470
+2024-01-19 08:46:52,339 - mmdet - INFO - Iter [11650/13950]	lr: 1.000e-03, eta: 1:20:23, time: 2.478, data_time: 0.476, memory: 9804, loss_cls: 0.3056, loss_bbox: 0.3910, loss: 0.6966, grad_norm: 2.1605
+2024-01-19 08:48:32,384 - mmdet - INFO - Iter [11700/13950]	lr: 1.000e-03, eta: 1:18:37, time: 2.001, data_time: 0.022, memory: 9804, loss_cls: 0.3219, loss_bbox: 0.4291, loss: 0.7510, grad_norm: 2.1222
+2024-01-19 08:50:12,790 - mmdet - INFO - Iter [11750/13950]	lr: 1.000e-03, eta: 1:16:51, time: 2.008, data_time: 0.023, memory: 9804, loss_cls: 0.3114, loss_bbox: 0.4239, loss: 0.7353, grad_norm: 2.0691
+2024-01-19 08:51:52,703 - mmdet - INFO - Iter [11800/13950]	lr: 1.000e-03, eta: 1:15:06, time: 1.998, data_time: 0.022, memory: 9804, loss_cls: 0.3270, loss_bbox: 0.4207, loss: 0.7477, grad_norm: 2.1917
+2024-01-19 08:53:32,785 - mmdet - INFO - Iter [11850/13950]	lr: 1.000e-03, eta: 1:13:20, time: 2.002, data_time: 0.022, memory: 9804, loss_cls: 0.3217, loss_bbox: 0.4196, loss: 0.7412, grad_norm: 2.0752
+2024-01-19 08:55:12,942 - mmdet - INFO - Iter [11900/13950]	lr: 1.000e-03, eta: 1:11:35, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3111, loss_bbox: 0.4186, loss: 0.7298, grad_norm: 2.0491
+2024-01-19 08:56:53,303 - mmdet - INFO - Iter [11950/13950]	lr: 1.000e-03, eta: 1:09:49, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.3012, loss_bbox: 0.4006, loss: 0.7018, grad_norm: 2.1922
+2024-01-19 08:58:33,458 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 08:58:33,459 - mmdet - INFO - Iter [12000/13950]	lr: 1.000e-03, eta: 1:08:04, time: 2.003, data_time: 0.023, memory: 9804, loss_cls: 0.3145, loss_bbox: 0.4258, loss: 0.7403, grad_norm: 2.2175
+2024-01-19 09:00:13,621 - mmdet - INFO - Iter [12050/13950]	lr: 1.000e-03, eta: 1:06:18, time: 2.003, data_time: 0.022, memory: 9804, loss_cls: 0.3131, loss_bbox: 0.4298, loss: 0.7429, grad_norm: 2.1146
+2024-01-19 09:02:05,989 - mmdet - INFO - Iter [12100/13950]	lr: 1.000e-03, eta: 1:04:41, time: 3.114, data_time: 1.145, memory: 9804, loss_cls: 0.3102, loss_bbox: 0.3797, loss: 0.6899, grad_norm: 2.1725
+2024-01-19 09:03:46,424 - mmdet - INFO - Iter [12150/13950]	lr: 1.000e-03, eta: 1:02:56, time: 2.009, data_time: 0.022, memory: 9804, loss_cls: 0.3040, loss_bbox: 0.4173, loss: 0.7213, grad_norm: 2.0775
+2024-01-19 09:05:26,847 - mmdet - INFO - Iter [12200/13950]	lr: 1.000e-03, eta: 1:01:10, time: 2.008, data_time: 0.022, memory: 9804, loss_cls: 0.3094, loss_bbox: 0.4126, loss: 0.7219, grad_norm: 2.1643
+2024-01-19 09:07:07,157 - mmdet - INFO - Iter [12250/13950]	lr: 1.000e-03, eta: 0:59:25, time: 2.006, data_time: 0.022, memory: 9804, loss_cls: 0.2998, loss_bbox: 0.4195, loss: 0.7193, grad_norm: 2.0200
+2024-01-19 09:08:47,497 - mmdet - INFO - Iter [12300/13950]	lr: 1.000e-03, eta: 0:57:39, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.3212, loss_bbox: 0.4012, loss: 0.7224, grad_norm: 2.2335
+2024-01-19 09:10:28,134 - mmdet - INFO - Iter [12350/13950]	lr: 1.000e-03, eta: 0:55:54, time: 2.013, data_time: 0.023, memory: 9804, loss_cls: 0.3124, loss_bbox: 0.4073, loss: 0.7196, grad_norm: 2.2268
+2024-01-19 09:12:08,498 - mmdet - INFO - Iter [12400/13950]	lr: 1.000e-03, eta: 0:54:08, time: 2.007, data_time: 0.023, memory: 9804, loss_cls: 0.3066, loss_bbox: 0.4080, loss: 0.7146, grad_norm: 2.2226
+2024-01-19 09:13:49,074 - mmdet - INFO - Iter [12450/13950]	lr: 1.000e-03, eta: 0:52:23, time: 2.012, data_time: 0.023, memory: 9804, loss_cls: 0.3106, loss_bbox: 0.4177, loss: 0.7283, grad_norm: 2.2733
+2024-01-19 09:15:29,487 - mmdet - INFO - Iter [12500/13950]	lr: 1.000e-03, eta: 0:50:38, time: 2.008, data_time: 0.022, memory: 9804, loss_cls: 0.3011, loss_bbox: 0.4023, loss: 0.7034, grad_norm: 2.2557
+2024-01-19 09:17:10,274 - mmdet - INFO - Iter [12550/13950]	lr: 1.000e-03, eta: 0:48:53, time: 2.016, data_time: 0.023, memory: 9804, loss_cls: 0.3192, loss_bbox: 0.4242, loss: 0.7433, grad_norm: 2.1743
+2024-01-19 09:19:02,802 - mmdet - INFO - Iter [12600/13950]	lr: 1.000e-03, eta: 0:47:09, time: 2.257, data_time: 0.270, memory: 9804, loss_cls: 0.2878, loss_bbox: 0.4022, loss: 0.6900, grad_norm: 2.0156
+2024-01-19 09:20:43,367 - mmdet - INFO - Iter [12650/13950]	lr: 1.000e-03, eta: 0:45:23, time: 2.011, data_time: 0.023, memory: 9804, loss_cls: 0.3026, loss_bbox: 0.3976, loss: 0.7002, grad_norm: 2.2336
+2024-01-19 09:22:23,869 - mmdet - INFO - Iter [12700/13950]	lr: 1.000e-03, eta: 0:43:38, time: 2.010, data_time: 0.022, memory: 9804, loss_cls: 0.3076, loss_bbox: 0.4148, loss: 0.7224, grad_norm: 2.1316
+2024-01-19 09:24:04,308 - mmdet - INFO - Iter [12750/13950]	lr: 1.000e-03, eta: 0:41:53, time: 2.009, data_time: 0.022, memory: 9804, loss_cls: 0.3110, loss_bbox: 0.4103, loss: 0.7214, grad_norm: 2.0942
+2024-01-19 09:25:44,194 - mmdet - INFO - Iter [12800/13950]	lr: 1.000e-03, eta: 0:40:08, time: 1.998, data_time: 0.023, memory: 9804, loss_cls: 0.3071, loss_bbox: 0.3990, loss: 0.7061, grad_norm: 2.3295
+2024-01-19 09:27:24,251 - mmdet - INFO - Iter [12850/13950]	lr: 1.000e-03, eta: 0:38:23, time: 2.001, data_time: 0.023, memory: 9804, loss_cls: 0.2986, loss_bbox: 0.3959, loss: 0.6945, grad_norm: 2.3317
+2024-01-19 09:29:04,725 - mmdet - INFO - Iter [12900/13950]	lr: 1.000e-03, eta: 0:36:38, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3110, loss_bbox: 0.4011, loss: 0.7121, grad_norm: 2.2033
+2024-01-19 09:30:44,469 - mmdet - INFO - Iter [12950/13950]	lr: 1.000e-03, eta: 0:34:53, time: 1.995, data_time: 0.023, memory: 9804, loss_cls: 0.3151, loss_bbox: 0.4186, loss: 0.7337, grad_norm: 2.0986
+2024-01-19 09:32:25,131 - mmdet - INFO - Exp name: retinanet_26e.py
+2024-01-19 09:32:25,131 - mmdet - INFO - Iter [13000/13950]	lr: 1.000e-03, eta: 0:33:08, time: 2.013, data_time: 0.023, memory: 9804, loss_cls: 0.3143, loss_bbox: 0.4138, loss: 0.7281, grad_norm: 2.1924
+2024-01-19 09:34:18,172 - mmdet - INFO - Iter [13050/13950]	lr: 1.000e-03, eta: 0:31:24, time: 2.399, data_time: 0.393, memory: 9804, loss_cls: 0.2983, loss_bbox: 0.4204, loss: 0.7187, grad_norm: 2.0822
+2024-01-19 09:35:57,788 - mmdet - INFO - Iter [13100/13950]	lr: 1.000e-03, eta: 0:29:39, time: 1.992, data_time: 0.022, memory: 9804, loss_cls: 0.2991, loss_bbox: 0.3961, loss: 0.6951, grad_norm: 2.1689
+2024-01-19 09:37:38,147 - mmdet - INFO - Iter [13150/13950]	lr: 1.000e-03, eta: 0:27:54, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.3069, loss_bbox: 0.3931, loss: 0.7000, grad_norm: 2.2458
+2024-01-19 09:39:18,573 - mmdet - INFO - Iter [13200/13950]	lr: 1.000e-03, eta: 0:26:09, time: 2.009, data_time: 0.023, memory: 9804, loss_cls: 0.3028, loss_bbox: 0.4080, loss: 0.7108, grad_norm: 2.2864
+2024-01-19 09:40:59,107 - mmdet - INFO - Iter [13250/13950]	lr: 1.000e-03, eta: 0:24:24, time: 2.011, data_time: 0.022, memory: 9804, loss_cls: 0.3012, loss_bbox: 0.4044, loss: 0.7055, grad_norm: 2.0354
+2024-01-19 09:42:39,081 - mmdet - INFO - Iter [13300/13950]	lr: 1.000e-03, eta: 0:22:40, time: 1.999, data_time: 0.022, memory: 9804, loss_cls: 0.3099, loss_bbox: 0.3965, loss: 0.7064, grad_norm: 2.4921
+2024-01-19 09:44:19,760 - mmdet - INFO - Iter [13350/13950]	lr: 1.000e-03, eta: 0:20:55, time: 2.014, data_time: 0.022, memory: 9804, loss_cls: 0.3039, loss_bbox: 0.4148, loss: 0.7187, grad_norm: 2.1839
+2024-01-19 09:46:00,468 - mmdet - INFO - Iter [13400/13950]	lr: 1.000e-03, eta: 0:19:10, time: 2.014, data_time: 0.023, memory: 9804, loss_cls: 0.2905, loss_bbox: 0.3935, loss: 0.6839, grad_norm: 2.2082
+2024-01-19 09:47:40,884 - mmdet - INFO - Iter [13450/13950]	lr: 1.000e-03, eta: 0:17:25, time: 2.008, data_time: 0.023, memory: 9804, loss_cls: 0.2922, loss_bbox: 0.4003, loss: 0.6925, grad_norm: 2.3620
+2024-01-19 09:49:33,224 - mmdet - INFO - Iter [13500/13950]	lr: 1.000e-03, eta: 0:15:42, time: 2.749, data_time: 0.759, memory: 9804, loss_cls: 0.2909, loss_bbox: 0.3858, loss: 0.6766, grad_norm: 2.5101
+2024-01-19 09:51:13,557 - mmdet - INFO - Iter [13550/13950]	lr: 1.000e-03, eta: 0:13:57, time: 2.007, data_time: 0.022, memory: 9804, loss_cls: 0.2914, loss_bbox: 0.4038, loss: 0.6952, grad_norm: 2.2237
+2024-01-19 09:52:54,110 - mmdet - INFO - Iter [13600/13950]	lr: 1.000e-03, eta: 0:12:12, time: 2.011, data_time: 0.022, memory: 9804, loss_cls: 0.2861, loss_bbox: 0.4080, loss: 0.6941, grad_norm: 2.2425
+2024-01-19 09:54:34,277 - mmdet - INFO - Iter [13650/13950]	lr: 1.000e-03, eta: 0:10:27, time: 2.003, data_time: 0.023, memory: 9804, loss_cls: 0.2989, loss_bbox: 0.3972, loss: 0.6961, grad_norm: 2.1627
+2024-01-19 09:56:13,939 - mmdet - INFO - Iter [13700/13950]	lr: 1.000e-03, eta: 0:08:43, time: 1.993, data_time: 0.023, memory: 9804, loss_cls: 0.3028, loss_bbox: 0.4058, loss: 0.7086, grad_norm: 2.2809
+2024-01-19 09:57:54,566 - mmdet - INFO - Iter [13750/13950]	lr: 1.000e-03, eta: 0:06:58, time: 2.013, data_time: 0.022, memory: 9804, loss_cls: 0.3062, loss_bbox: 0.3849, loss: 0.6911, grad_norm: 2.2250
+2024-01-19 09:59:35,185 - mmdet - INFO - Iter [13800/13950]	lr: 1.000e-03, eta: 0:05:13, time: 2.012, data_time: 0.022, memory: 9804, loss_cls: 0.3042, loss_bbox: 0.4072, loss: 0.7115, grad_norm: 2.2032
+2024-01-19 10:01:15,276 - mmdet - INFO - Iter [13850/13950]	lr: 1.000e-03, eta: 0:03:29, time: 2.002, data_time: 0.022, memory: 9804, loss_cls: 0.2991, loss_bbox: 0.4004, loss: 0.6995, grad_norm: 2.2798
+2024-01-19 10:02:55,461 - mmdet - INFO - Iter [13900/13950]	lr: 1.000e-03, eta: 0:01:44, time: 2.004, data_time: 0.023, memory: 9804, loss_cls: 0.2990, loss_bbox: 0.3764, loss: 0.6754, grad_norm: 2.2474
+2024-01-19 10:04:35,778 - mmdet - INFO - Iter [13950/13950]	lr: 1.000e-03, eta: 0:00:00, time: 2.006, data_time: 0.023, memory: 9804, loss_cls: 0.2972, loss_bbox: 0.3948, loss: 0.6920, grad_norm: 2.3190
+2024-01-19 10:04:36,611 - mmdet - INFO - Saving checkpoint at 30 epochs

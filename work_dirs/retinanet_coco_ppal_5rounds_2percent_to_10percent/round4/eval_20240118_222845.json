@@ -1,0 +1,1 @@
+{"config": "configs/coco_active_learning/al_train/retinanet_26e.py", "metric": {"bbox_mAP": 0.023, "bbox_mAP_50": 0.069, "bbox_mAP_75": 0.01, "bbox_mAP_s": 0.023, "bbox_mAP_m": -1.0, "bbox_mAP_l": -1.0, "bbox_mAP_copypaste": "0.023 0.069 0.010 0.023 -1.000 -1.000"}}
